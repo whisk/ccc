@@ -1,6 +1,6 @@
 # ccc project specific
-data/*.txt
-build/*
+*/data/
+*/build/
 
 # java-specific
 *.class
