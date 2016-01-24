@@ -212,7 +212,7 @@ public class Task21 extends Configured implements Tool {
             StringBuilder buf = new StringBuilder();
             for (Pair<Double, String> item : valToKeyMap) {
                 if (buf.length() > 0) {
-                    buf.append("|");
+                    buf.append(" ");
                 }
                 buf.append(item.second + "=" + item.first.toString());
             }
