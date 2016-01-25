@@ -1,2 +1,12 @@
-NAME="Task21"
-/usr/bin/hadoop jar $NAME.jar task.$NAME -D N=10 /ccc/task_2_1/
+#!/bin/bash
+
+NAME=$1
+HDFS_INPUT_PATH="/ccc/${2}"
+HDFS_OUTPUT_PATH="/ccc/output/$NAME/"
+
+if [[ -z $NAME ]]; then
+    echo "No task given"
+    exit 1
+fi
+
+/usr/bin/hadoop jar $NAME.jar task.$NAME -D N=10 $HDFS_INPUT_PATH $HDFS_OUTPUT_PATH
