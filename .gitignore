@@ -1,5 +1,6 @@
 # ccc project specific
 */data/
+sample-data/*
 
 # java-specific
 *.class
