@@ -39,10 +39,10 @@ import common.mr.ReduceAverage;
 import common.mr.MapPairKeyMinList;
 import common.mr.ReducePairKeyMinList;
 
-public class Task21 extends ImprovedTask implements Tool {
+public class Task22 extends ImprovedTask implements Tool {
 
     public static void main(String[] args) throws Exception {
-        int res = ToolRunner.run(new Configuration(), new Task21(), args);
+        int res = ToolRunner.run(new Configuration(), new Task22(), args);
         System.exit(res);
     }
 
@@ -59,22 +59,22 @@ public class Task21 extends ImprovedTask implements Tool {
         fs.delete(outPath, true);
 
         // Origin-Carrier Departure Delay
-        Job jobOCD = Job.getInstance(conf, "Origin-Carrier Departure Delay");
+        Job jobOCD = Job.getInstance(conf, "Origin-Destination Departure Delay");
         jobOCD.setOutputKeyClass(Text.class);
         jobOCD.setOutputValueClass(DoubleWritable.class);
 
-        jobOCD.setMapperClass(OriginCarrierDepDelayMap.class);
+        jobOCD.setMapperClass(OriginDestinationDepDelayMap.class);
         jobOCD.setReducerClass(ReduceAverage.class);
 
         FileInputFormat.setInputPaths(jobOCD, Path.mergePaths(pathInputPrefix, new Path("/input")));
         FileOutputFormat.setOutputPath(jobOCD, tmpPath);
 
-        jobOCD.setJarByClass(Task21.class);
+        jobOCD.setJarByClass(Task22.class);
 
         jobOCD.waitForCompletion(true);
 
         // Origin-Carrier top departure performance 
-        Job jobOCP = Job.getInstance(conf, "Origin-Carrier top departure performance");
+        Job jobOCP = Job.getInstance(conf, "Origin-Destination top departure performance");
 
         jobOCP.setOutputKeyClass(Text.class);
         jobOCP.setOutputValueClass(Text.class);
@@ -87,22 +87,22 @@ public class Task21 extends ImprovedTask implements Tool {
         FileInputFormat.setInputPaths(jobOCP, tmpPath);
         FileOutputFormat.setOutputPath(jobOCP, outPath);
 
-        jobOCP.setJarByClass(Task21.class);
+        jobOCP.setJarByClass(Task22.class);
 
         return jobOCP.waitForCompletion(true)? 0 : 1;
     }
 
-    public static class OriginCarrierDepDelayMap extends Mapper<Object, Text, Text, DoubleWritable> {
+    public static class OriginDestinationDepDelayMap extends Mapper<Object, Text, Text, DoubleWritable> {
         @Override
         public void map(Object lineNum, Text value, Context context) throws IOException, InterruptedException {
             String[] row = value.toString().split("\\s");
             try {
                 String origin = row[1];
-                String carrier = row[0];
+                String destination = row[2];
                 double depDelay = Double.parseDouble(row[3]);
                 
-                String orgCarr = (origin + "-" + carrier).toUpperCase();
-                context.write(new Text(orgCarr), new DoubleWritable(depDelay));
+                String orgDest = (origin + "-" + destination).toUpperCase();
+                context.write(new Text(orgDest), new DoubleWritable(depDelay));
             } catch (Exception e) {
                 // skip on error parsing
             }
