@@ -59,7 +59,7 @@ public class Task23 extends ImprovedTask implements Tool {
         fs.delete(outPath, true);
 
         // Origin-Carrier Departure Delay
-        Job jobOCD = Job.getInstance(conf, "Origin-Destination|Carrier Departure Delay");
+        Job jobOCD = Job.getInstance(conf, "Origin-Destination|Carrier Arrival Delay");
         jobOCD.setOutputKeyClass(Text.class);
         jobOCD.setOutputValueClass(DoubleWritable.class);
 
@@ -74,7 +74,7 @@ public class Task23 extends ImprovedTask implements Tool {
         jobOCD.waitForCompletion(true);
 
         // Origin-Carrier top departure performance 
-        Job jobOCP = Job.getInstance(conf, "Origin-Destination top departure performance by Carrier");
+        Job jobOCP = Job.getInstance(conf, "Origin-Destination top arrival performance by Carrier");
 
         jobOCP.setOutputKeyClass(Text.class);
         jobOCP.setOutputValueClass(Text.class);
@@ -100,7 +100,7 @@ public class Task23 extends ImprovedTask implements Tool {
                 String origin = row[1];
                 String destination = row[2];
                 String carrier = row[0];
-                double depDelay = Double.parseDouble(row[3]);
+                double depDelay = Double.parseDouble(row[4]);
                 
                 // paired key = (origin-destination, carrier)
                 String pairedKey = (origin + "_" + destination + "-" + carrier).toUpperCase();
