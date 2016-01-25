@@ -58,38 +58,36 @@ public class Task21 extends ImprovedTask implements Tool {
         Path outPath = Path.mergePaths(pathWorkPrefix, new Path("/output"));
         fs.delete(outPath, true);
 
-        // Origin-Carrier Departure Delay
-        Job jobOCD = Job.getInstance(conf, "Origin-Carrier Departure Delay");
-        jobOCD.setOutputKeyClass(Text.class);
-        jobOCD.setOutputValueClass(DoubleWritable.class);
+        Job jobA = Job.getInstance(conf, "Origin-Carrier Departure Delay");
+        jobA.setOutputKeyClass(Text.class);
+        jobA.setOutputValueClass(DoubleWritable.class);
 
-        jobOCD.setMapperClass(OriginCarrierDepDelayMap.class);
-        jobOCD.setReducerClass(ReduceAverage.class);
+        jobA.setMapperClass(OriginCarrierDepDelayMap.class);
+        jobA.setReducerClass(ReduceAverage.class);
 
-        FileInputFormat.setInputPaths(jobOCD, Path.mergePaths(pathInputPrefix, new Path("/input")));
-        FileOutputFormat.setOutputPath(jobOCD, tmpPath);
+        FileInputFormat.setInputPaths(jobA, Path.mergePaths(pathInputPrefix, new Path("/input")));
+        FileOutputFormat.setOutputPath(jobA, tmpPath);
 
-        jobOCD.setJarByClass(Task21.class);
+        jobA.setJarByClass(Task21.class);
 
-        jobOCD.waitForCompletion(true);
+        jobA.waitForCompletion(true);
 
-        // Origin-Carrier top departure performance 
-        Job jobOCP = Job.getInstance(conf, "Origin-Carrier top departure performance");
+        Job jobB = Job.getInstance(conf, "Origin Top Departure Performance by Carrier");
 
-        jobOCP.setOutputKeyClass(Text.class);
-        jobOCP.setOutputValueClass(Text.class);
+        jobB.setOutputKeyClass(Text.class);
+        jobB.setOutputValueClass(Text.class);
 
-        jobOCP.setMapperClass(MapPairKeyMinList.class);
-        jobOCP.setMapOutputValueClass(TextArrayWritable.class);
-        jobOCP.setReducerClass(ReducePairKeyMinList.class);
-        jobOCP.setNumReduceTasks(1);
+        jobB.setMapperClass(MapPairKeyMinList.class);
+        jobB.setMapOutputValueClass(TextArrayWritable.class);
+        jobB.setReducerClass(ReducePairKeyMinList.class);
+        jobB.setNumReduceTasks(1);
 
-        FileInputFormat.setInputPaths(jobOCP, tmpPath);
-        FileOutputFormat.setOutputPath(jobOCP, outPath);
+        FileInputFormat.setInputPaths(jobB, tmpPath);
+        FileOutputFormat.setOutputPath(jobB, outPath);
 
-        jobOCP.setJarByClass(Task21.class);
+        jobB.setJarByClass(Task21.class);
 
-        return jobOCP.waitForCompletion(true)? 0 : 1;
+        return jobB.waitForCompletion(true)? 0 : 1;
     }
 
     public static class OriginCarrierDepDelayMap extends Mapper<Object, Text, Text, DoubleWritable> {
