@@ -14,4 +14,4 @@ if [[ -z $HDFS_INPUT_PATH ]]; then
     exit 1
 fi
 
-/usr/bin/hadoop jar $NAME.jar task.$NAME -D N=10 $HDFS_INPUT_PATH $HDFS_OUTPUT_PATH
+$HADOOP_INSTALL/bin/hadoop jar $NAME.jar task.$NAME -D N=10 $HDFS_INPUT_PATH $HDFS_OUTPUT_PATH

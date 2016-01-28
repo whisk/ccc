@@ -65,7 +65,7 @@ public class Task21 extends ImprovedTask implements Tool {
         jobA.setMapperClass(OriginCarrierDepDelayMap.class);
         jobA.setReducerClass(ReduceAverage.class);
 
-        FileInputFormat.setInputPaths(jobA, Path.mergePaths(pathInputPrefix, new Path("/input")));
+        FileInputFormat.setInputPaths(jobA, pathInputPrefix);
         FileOutputFormat.setOutputPath(jobA, tmpPath);
 
         jobA.setJarByClass(Task21.class);
