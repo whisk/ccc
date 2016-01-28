@@ -13,8 +13,8 @@ BUILD_DIR="tmp-build"
 rm -rf $BUILD_DIR/* ./*.jar
 
 export HADOOP_CLASSPATH="$JAVA_HOME/lib/tools.jar:`pwd`"
-export CLASSPATH="`/usr/bin/hadoop classpath`:`pwd`"
+export CLASSPATH="`$HADOOP_INSTALL/bin/hadoop classpath`:`pwd`"
 export -p | grep CLASS
 
-/usr/bin/hadoop com.sun.tools.javac.Main task/${NAME}.java common/*.java common/mr/*.java -d $BUILD_DIR -Xlint:unchecked
+$HADOOP_INSTALL/bin/hadoop com.sun.tools.javac.Main task/${NAME}.java common/*.java common/mr/*.java -d $BUILD_DIR -Xlint:unchecked
 jar -cvf ${NAME}.jar -C $BUILD_DIR ./
