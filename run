@@ -1,7 +1,28 @@
 #!/bin/bash
 
+N=10
+
+OPTIND=1  
+while getopts "n:" opt; do
+  case $opt in
+    n)
+      N=$OPTARG
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      ;;
+    :)
+      echo "Option -$OPTARG requires an argument." >&2
+      exit 1
+      ;;
+  esac
+done
+shift $((OPTIND-1))
+[ "$1" = "--" ] && shift
+
 NAME=$1
 HDFS_INPUT_PATH=$2
+
 HDFS_OUTPUT_PATH="/ccc/output/$NAME/"
 
 if [[ -z $NAME ]]; then
@@ -14,4 +35,8 @@ if [[ -z $HDFS_INPUT_PATH ]]; then
     exit 1
 fi
 
-/usr/bin/hadoop jar $NAME.jar task.$NAME -D N=10 $HDFS_INPUT_PATH $HDFS_OUTPUT_PATH
+echo $NAME
+echo $HDFS_INPUT_PATH
+echo $HDFS_OUTPUT_PATH
+
+/usr/bin/hadoop jar $NAME.jar task.$NAME -D N=$N $HDFS_INPUT_PATH $HDFS_OUTPUT_PATH

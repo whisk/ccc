@@ -68,7 +68,7 @@ public class Task24 extends ImprovedTask implements Tool {
 
         jobA.setJarByClass(Task24.class);
 
-        return jobA.waitForCompletion(true) ? 1 : 0;
+        return jobA.waitForCompletion(true) ? 0 : 1;
     }
 
     public static class OriginDestinationArrivalDelayMap extends Mapper<Object, Text, Text, DoubleWritable> {
