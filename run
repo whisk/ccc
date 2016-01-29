@@ -22,8 +22,7 @@ shift $((OPTIND-1))
 
 NAME=$1
 HDFS_INPUT_PATH=$2
-
-HDFS_OUTPUT_PATH="/ccc/output/$NAME/"
+HDFS_OUTPUT_PATH="/ccc/$NAME/"
 
 if [[ -z $NAME ]]; then
     echo "No task given"
@@ -35,4 +34,6 @@ if [[ -z $HDFS_INPUT_PATH ]]; then
     exit 1
 fi
 
-$HADOOP_INSTALL/bin/hadoop jar $NAME.jar task.$NAME -D N=$N $HDFS_INPUT_PATH $HDFS_OUTPUT_PATH
+$HADOOP_INSTALL/bin/hdfs dfs -mkdir -p $HDFS_OUTPUT_PATH || true 
+
+$HADOOP_INSTALL/bin/hadoop jar jars/$NAME.jar task.$NAME -D N=$N $HDFS_INPUT_PATH $HDFS_OUTPUT_PATH

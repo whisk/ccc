@@ -3,18 +3,17 @@
 NAME=$1
 
 if [[ -z $NAME ]]; then
-    echo "No task given"
+    echo "No task name given"
     exit 1
 fi
 
-BUILD_DIR="tmp-build"
+BUILD_DIR="tmp-hdbuild"
 
 [[ ! -d $BUILD_DIR ]] && mkdir $BUILD_DIR
-rm -rf $BUILD_DIR/* ./*.jar
+rm -rf "$BUILD_DIR/$NAME*"
 
 export HADOOP_CLASSPATH="$JAVA_HOME/lib/tools.jar:`pwd`"
 export CLASSPATH="`$HADOOP_INSTALL/bin/hadoop classpath`:`pwd`"
-export -p | grep CLASS
 
 $HADOOP_INSTALL/bin/hadoop com.sun.tools.javac.Main task/${NAME}.java common/*.java common/mr/*.java -d $BUILD_DIR -Xlint:unchecked
-jar -cvf ${NAME}.jar -C $BUILD_DIR ./
+jar -cvf jars/${NAME}.jar -C $BUILD_DIR ./
