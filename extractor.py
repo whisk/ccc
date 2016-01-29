@@ -1,20 +1,23 @@
 #!/usr/bin/env python
 
-# A a script to print specified fields from csv by number (starting from zero)
+# A script to print specified fields from csv by number (starting from zero)
 # Version: 0.1
-# Usage: ./extractor.py file.csv 4 6 37
+# Usage: ./extractor.py file_in.csv file_out.txt 4 6 37
 
 import sys
 import csv
 
-fname = sys.argv[1]
-f = open(fname, 'r')
-csv_reader = csv.reader(f, delimiter=',', quotechar='"')
-
-fields = sys.argv[2:]
+file_in = open(sys.argv[1], 'r')
+csv_reader = csv.reader(file_in, delimiter=',', quotechar='"')
+file_out = open(sys.argv[2], 'w')
+fields = sys.argv[3:]
 
 header = csv_reader.next()
+l = 0
 for row in csv_reader:
+    l += 1
+    if l == 1:
+        continue
     for i in fields:
-        print (row[int(i)]), 
-    print
+        file_out.write(row[int(i)] + ' ') 
+    file_out.write("\n")
