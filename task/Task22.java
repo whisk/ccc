@@ -95,9 +95,9 @@ public class Task22 extends ImprovedTask implements Tool {
         public void map(Object lineNum, Text value, Context context) throws IOException, InterruptedException {
             String[] row = value.toString().split("\\s");
             try {
-                String origin = row[1];
-                String destination = row[2];
-                double depDelay = Double.parseDouble(row[3]);
+                String origin = row[5];
+                String destination = row[6];
+                double depDelay = Double.parseDouble(row[8]);
                 
                 String orgDest = (origin + "-" + destination).toUpperCase();
                 context.write(new Text(orgDest), new DoubleWritable(depDelay));

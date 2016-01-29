@@ -60,7 +60,7 @@ public class Task24 extends ImprovedTask implements Tool {
         jobA.setOutputKeyClass(Text.class);
         jobA.setOutputValueClass(DoubleWritable.class);
 
-        jobA.setMapperClass(OriginDestinationArrivalDelayMap.class);
+        jobA.setMapperClass(OriginDestinationArrDelayMap.class);
         jobA.setReducerClass(ReduceAverage.class);
 
         FileInputFormat.setInputPaths(jobA, Path.mergePaths(pathInputPrefix, new Path("/input")));
@@ -71,14 +71,14 @@ public class Task24 extends ImprovedTask implements Tool {
         return jobA.waitForCompletion(true) ? 0 : 1;
     }
 
-    public static class OriginDestinationArrivalDelayMap extends Mapper<Object, Text, Text, DoubleWritable> {
+    public static class OriginDestinationArrDelayMap extends Mapper<Object, Text, Text, DoubleWritable> {
         @Override
         public void map(Object lineNum, Text value, Context context) throws IOException, InterruptedException {
             String[] row = value.toString().split("\\s");
             try {
-                String origin = row[1];
-                String destination = row[2];
-                double arrDelay = Double.parseDouble(row[4]);
+                String origin = row[5];
+                String destination = row[6];
+                double arrDelay = Double.parseDouble(row[9]);
                 
                 String key = (origin + "_" + destination).toUpperCase();
                 context.write(new Text(key), new DoubleWritable(arrDelay));

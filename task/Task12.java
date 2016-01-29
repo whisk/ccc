@@ -1,3 +1,5 @@
+package task;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -28,7 +30,12 @@ import java.util.List;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
 
-public class Task12 extends Configured implements Tool {
+import common.ImprovedTask;
+import common.TextArrayWritable;
+import common.Pair;
+import common.mr.ReduceAverage;
+
+public class Task12 extends ImprovedTask implements Tool {
 
     public static void main(String[] args) throws Exception {
         int res = ToolRunner.run(new Configuration(), new Task12(), args);
@@ -40,12 +47,13 @@ public class Task12 extends Configured implements Tool {
         // init
         Configuration conf = this.getConf();
         FileSystem fs = FileSystem.get(conf);
-        Path pathPrefix = new Path(args[0]);
-        Path tmpPath = Path.mergePaths(pathPrefix, new Path("/tmp"));
+        Path pathInputPrefix = new Path(args[0]);
+        Path pathWorkPrefix  = new Path(args[1]);
+        Path tmpPath = Path.mergePaths(pathWorkPrefix, new Path("/tmp"));
         fs.delete(tmpPath, true);
-        Path outCarrierPath = Path.mergePaths(pathPrefix, new Path("/output_carrier"));
+        Path outCarrierPath = Path.mergePaths(pathWorkPrefix, new Path("/output_carrier"));
         fs.delete(outCarrierPath, true);
-        Path outWeekdayPath = Path.mergePaths(pathPrefix, new Path("/output_weekday"));
+        Path outWeekdayPath = Path.mergePaths(pathWorkPrefix, new Path("/output_weekday"));
         fs.delete(outWeekdayPath, true);
 
         // Carrier Delay
@@ -53,10 +61,10 @@ public class Task12 extends Configured implements Tool {
         jobCD.setOutputKeyClass(Text.class);
         jobCD.setOutputValueClass(DoubleWritable.class);
 
-        jobCD.setMapperClass(CarrierDelayMap.class);
-        jobCD.setReducerClass(CarrierDelayReduce.class);
+        jobCD.setMapperClass(CarrierArrDelayMap.class);
+        jobCD.setReducerClass(ReduceAverage.class);
 
-        FileInputFormat.setInputPaths(jobCD, Path.mergePaths(pathPrefix, new Path("/input")));
+        FileInputFormat.setInputPaths(jobCD, pathInputPrefix);
         FileOutputFormat.setOutputPath(jobCD, tmpPath);
 
         jobCD.setJarByClass(Task12.class);
@@ -69,9 +77,9 @@ public class Task12 extends Configured implements Tool {
         jobWD.setOutputValueClass(DoubleWritable.class);
 
         jobWD.setMapperClass(WeekdayDelayMap.class);
-        jobWD.setReducerClass(WeekdayDelayReduce.class);
+        jobWD.setReducerClass(ReduceAverage.class);
 
-        FileInputFormat.setInputPaths(jobWD, Path.mergePaths(pathPrefix, new Path("/input")));
+        FileInputFormat.setInputPaths(jobWD, pathInputPrefix);
         FileOutputFormat.setOutputPath(jobWD, outWeekdayPath);
 
         jobWD.setJarByClass(Task12.class);
@@ -102,61 +110,16 @@ public class Task12 extends Configured implements Tool {
         return jobMD.waitForCompletion(true)? 0 : 1;
     }
 
-    public static String readHDFSFile(String path, Configuration conf) throws IOException{
-        Path pt=new Path(path);
-        FileSystem fs = FileSystem.get(pt.toUri(), conf);
-        FSDataInputStream file = fs.open(pt);
-        BufferedReader buffIn=new BufferedReader(new InputStreamReader(file));
-
-        StringBuilder everything = new StringBuilder();
-        String line;
-        while( (line = buffIn.readLine()) != null) {
-            everything.append(line);
-            everything.append("\n");
-        }
-        return everything.toString();
-    }
-
-    public static class TextArrayWritable extends ArrayWritable {
-        public TextArrayWritable() {
-            super(Text.class);
-        }
-
-        public TextArrayWritable(String[] strings) {
-            super(Text.class);
-            Text[] texts = new Text[strings.length];
-            for (int i = 0; i < strings.length; i++) {
-                texts[i] = new Text(strings[i]);
-            }
-            set(texts);
-        }
-    }
-
-    public static class CarrierDelayMap extends Mapper<Object, Text, Text, DoubleWritable> {
+    public static class CarrierArrDelayMap extends Mapper<Object, Text, Text, DoubleWritable> {
         @Override
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
             String[] row = value.toString().split("\\s");
             // sometimes delay not specified
-            double delay = 0.0;
             try {
-                delay = Double.parseDouble(row[2]);
+                double arrDelay = Double.parseDouble(row[9]);
+                context.write(new Text(row[4].toUpperCase()), new DoubleWritable(arrDelay));
             } catch (Exception e) {
             }
-
-            context.write(new Text(row[1].toUpperCase()), new DoubleWritable(delay));
-        }
-    }
-
-    public static class CarrierDelayReduce extends Reducer<Text, DoubleWritable, Text, DoubleWritable> {
-        @Override
-        public void reduce(Text key, Iterable<DoubleWritable> values, Context context) throws IOException, InterruptedException {
-            double sum = 0.0;
-            long i = 0;
-            for (DoubleWritable val : values) {
-                sum += val.get();
-                i = i + 1;
-            }
-            context.write(key, new DoubleWritable(sum / i));
         }
     }
 
@@ -172,19 +135,6 @@ public class Task12 extends Configured implements Tool {
             }
 
             context.write(new Text(row[0]), new DoubleWritable(delay));
-        }
-    }
-
-    public static class WeekdayDelayReduce extends Reducer<Text, DoubleWritable, Text, DoubleWritable> {
-        @Override
-        public void reduce(Text key, Iterable<DoubleWritable> values, Context context) throws IOException, InterruptedException {
-            double sum = 0.0;
-            long i = 0;
-            for (DoubleWritable val : values) {
-                sum += val.get();
-                i = i + 1;
-            }
-            context.write(key, new DoubleWritable(sum / i));
         }
     }
 
@@ -253,58 +203,4 @@ public class Task12 extends Configured implements Tool {
         }
     }
 
-}
-
-// >>> Don't Change
-class Pair<A extends Comparable<? super A>,
-        B extends Comparable<? super B>>
-        implements Comparable<Pair<A, B>> {
-
-    public final A first;
-    public final B second;
-
-    public Pair(A first, B second) {
-        this.first = first;
-        this.second = second;
-    }
-
-    public static <A extends Comparable<? super A>,
-            B extends Comparable<? super B>>
-    Pair<A, B> of(A first, B second) {
-        return new Pair<A, B>(first, second);
-    }
-
-    @Override
-    public int compareTo(Pair<A, B> o) {
-        int cmp = o == null ? 1 : (this.first).compareTo(o.first);
-        return cmp == 0 ? (this.second).compareTo(o.second) : cmp;
-    }
-
-    @Override
-    public int hashCode() {
-        return 31 * hashcode(first) + hashcode(second);
-    }
-
-    private static int hashcode(Object o) {
-        return o == null ? 0 : o.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof Pair))
-            return false;
-        if (this == obj)
-            return true;
-        return equal(first, ((Pair<?, ?>) obj).first)
-                && equal(second, ((Pair<?, ?>) obj).second);
-    }
-
-    private boolean equal(Object o1, Object o2) {
-        return o1 == o2 || (o1 != null && o1.equals(o2));
-    }
-
-    @Override
-    public String toString() {
-        return "(" + first + ", " + second + ')';
-    }
 }

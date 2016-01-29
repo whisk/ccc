@@ -28,9 +28,6 @@ import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TreeSet;
-import java.util.Map;
-import java.util.HashMap;
 
 import common.ImprovedTask;
 import common.TextArrayWritable;
@@ -95,9 +92,9 @@ public class Task21 extends ImprovedTask implements Tool {
         public void map(Object lineNum, Text value, Context context) throws IOException, InterruptedException {
             String[] row = value.toString().split("\\s");
             try {
-                String origin = row[1];
-                String carrier = row[0];
-                double depDelay = Double.parseDouble(row[3]);
+                String origin = row[5];
+                String carrier = row[4];
+                double depDelay = Double.parseDouble(row[8]);
                 
                 String orgCarr = (origin + "-" + carrier).toUpperCase();
                 context.write(new Text(orgCarr), new DoubleWritable(depDelay));

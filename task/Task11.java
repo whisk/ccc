@@ -1,3 +1,5 @@
+package task;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -27,8 +29,11 @@ import java.util.List;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
 
-// >>> Don't Change
-public class Task11 extends Configured implements Tool {
+import common.ImprovedTask;
+import common.Pair;
+import common.TextArrayWritable;
+
+public class Task11 extends ImprovedTask implements Tool {
 
     public static void main(String[] args) throws Exception {
         int res = ToolRunner.run(new Configuration(), new Task11(), args);
@@ -40,133 +45,60 @@ public class Task11 extends Configured implements Tool {
         // init
         Configuration conf = this.getConf();
         FileSystem fs = FileSystem.get(conf);
-        Path pathPrefix = new Path(args[0]);
-        Path orgCountPath = Path.mergePaths(pathPrefix, new Path("/tmp_org"));
-        fs.delete(orgCountPath, true);
-        Path dstCountPath = Path.mergePaths(pathPrefix, new Path("/tmp_dst"));
-        fs.delete(dstCountPath, true);
-        Path orgOutPath = Path.mergePaths(pathPrefix, new Path("/output_org"));
-        fs.delete(orgOutPath, true);
-        Path dstOutPath = Path.mergePaths(pathPrefix, new Path("/output_dst"));
-        fs.delete(dstOutPath, true);
+        Path pathInputPrefix = new Path(args[0]);
+        Path pathWorkPrefix  = new Path(args[1]);
+        Path tmpPath = Path.mergePaths(pathWorkPrefix, new Path("/tmp"));
+        fs.delete(tmpPath, true);
+        Path outPath = Path.mergePaths(pathWorkPrefix, new Path("/output"));
+        fs.delete(outPath, true);
 
-        // count origins
-        Job jobOrg = Job.getInstance(conf, "Origins Count");
-        jobOrg.setOutputKeyClass(Text.class);
-        jobOrg.setOutputValueClass(IntWritable.class);
+        // count origins and destinations
+        Job jobA = Job.getInstance(conf, "Popularity Count");
+        jobA.setOutputKeyClass(Text.class);
+        jobA.setOutputValueClass(IntWritable.class);
 
-        jobOrg.setMapperClass(OriginCountMap.class);
-        jobOrg.setReducerClass(CountReduce.class);
+        jobA.setMapperClass(PopularityCountMap.class);
+        jobA.setReducerClass(CountReduce.class);
 
-        FileInputFormat.setInputPaths(jobOrg, Path.mergePaths(pathPrefix, new Path("/input")));
-        FileOutputFormat.setOutputPath(jobOrg, orgCountPath);
+        FileInputFormat.setInputPaths(jobA, pathInputPrefix);
+        FileOutputFormat.setOutputPath(jobA, tmpPath);
 
-        jobOrg.setJarByClass(Task11.class);
+        jobA.setJarByClass(Task11.class);
 
-        // count destinations
-        Job jobDst = Job.getInstance(conf, "Destinations Count");
-        jobDst.setOutputKeyClass(Text.class);
-        jobDst.setOutputValueClass(IntWritable.class);
+        jobA.waitForCompletion(true);
 
-        jobDst.setMapperClass(DestinationCountMap.class);
-        jobDst.setReducerClass(CountReduce.class);
+        // top popularity
+        Job jobB = Job.getInstance(conf, "Top Popularity");
+        jobB.setOutputKeyClass(Text.class);
+        jobB.setOutputValueClass(IntWritable.class);
 
-        FileInputFormat.setInputPaths(jobDst, Path.mergePaths(pathPrefix, new Path("/input")));
-        FileOutputFormat.setOutputPath(jobDst, dstCountPath);
+        jobB.setMapOutputKeyClass(NullWritable.class);
+        jobB.setMapOutputValueClass(TextArrayWritable.class);
 
-        jobDst.setJarByClass(Task11.class);
-        
-        // run count
-        jobOrg.waitForCompletion(true);
-        jobDst.waitForCompletion(true);
+        jobB.setMapperClass(TopMap.class);
+        jobB.setReducerClass(TopReduce.class);
+        jobB.setNumReduceTasks(1);
 
-        // top origins
-        Job jobTopOrg = Job.getInstance(conf, "Top Origins");
-        jobTopOrg.setOutputKeyClass(Text.class);
-        jobTopOrg.setOutputValueClass(IntWritable.class);
+        FileInputFormat.setInputPaths(jobB, tmpPath);
+        FileOutputFormat.setOutputPath(jobB, outPath);
 
-        jobTopOrg.setMapOutputKeyClass(NullWritable.class);
-        jobTopOrg.setMapOutputValueClass(TextArrayWritable.class);
+        jobB.setInputFormatClass(KeyValueTextInputFormat.class);
+        jobB.setOutputFormatClass(TextOutputFormat.class);
 
-        jobTopOrg.setMapperClass(TopMap.class);
-        jobTopOrg.setReducerClass(TopReduce.class);
-        jobTopOrg.setNumReduceTasks(1);
-
-        FileInputFormat.setInputPaths(jobTopOrg, orgCountPath);
-        FileOutputFormat.setOutputPath(jobTopOrg, orgOutPath);
-
-        jobTopOrg.setInputFormatClass(KeyValueTextInputFormat.class);
-        jobTopOrg.setOutputFormatClass(TextOutputFormat.class);
-
-        jobTopOrg.setJarByClass(Task11.class);
-
-        // top destinations
-        Job jobTopDst = Job.getInstance(conf, "Top Destinations");
-        jobTopDst.setOutputKeyClass(Text.class);
-        jobTopDst.setOutputValueClass(IntWritable.class);
-
-        jobTopDst.setMapOutputKeyClass(NullWritable.class);
-        jobTopDst.setMapOutputValueClass(TextArrayWritable.class);
-
-        jobTopDst.setMapperClass(TopMap.class);
-        jobTopDst.setReducerClass(TopReduce.class);
-        jobTopDst.setNumReduceTasks(1);
-
-        FileInputFormat.setInputPaths(jobTopDst, dstCountPath);
-        FileOutputFormat.setOutputPath(jobTopDst, dstOutPath);
-
-        jobTopDst.setInputFormatClass(KeyValueTextInputFormat.class);
-        jobTopDst.setOutputFormatClass(TextOutputFormat.class);
-
-        jobTopDst.setJarByClass(Task11.class);
+        jobB.setJarByClass(Task11.class);
 
         // run top origins and destinations
-        return jobTopOrg.waitForCompletion(true) && jobTopDst.waitForCompletion(true)? 0 : 1;
+        return jobB.waitForCompletion(true)? 0 : 1;
     }
 
-    public static String readHDFSFile(String path, Configuration conf) throws IOException{
-        Path pt=new Path(path);
-        FileSystem fs = FileSystem.get(pt.toUri(), conf);
-        FSDataInputStream file = fs.open(pt);
-        BufferedReader buffIn=new BufferedReader(new InputStreamReader(file));
-
-        StringBuilder everything = new StringBuilder();
-        String line;
-        while( (line = buffIn.readLine()) != null) {
-            everything.append(line);
-            everything.append("\n");
-        }
-        return everything.toString();
-    }
-
-    public static class TextArrayWritable extends ArrayWritable {
-        public TextArrayWritable() {
-            super(Text.class);
-        }
-
-        public TextArrayWritable(String[] strings) {
-            super(Text.class);
-            Text[] texts = new Text[strings.length];
-            for (int i = 0; i < strings.length; i++) {
-                texts[i] = new Text(strings[i]);
-            }
-            set(texts);
-        }
-    }
-
-    public static class OriginCountMap extends Mapper<Object, Text, Text, IntWritable> {
+    public static class PopularityCountMap extends Mapper<Object, Text, Text, IntWritable> {
         @Override
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
             String[] row = value.toString().split("\\s");
-            context.write(new Text(row[0].toUpperCase()), new IntWritable(1));
-        }
-    }
-
-    public static class DestinationCountMap extends Mapper<Object, Text, Text, IntWritable> {
-        @Override
-        public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
-            String[] row = value.toString().split("\\s");
-            context.write(new Text(row[1].toUpperCase()), new IntWritable(1));
+            // origin
+            context.write(new Text(row[5].toUpperCase()), new IntWritable(1));
+            // destination
+            context.write(new Text(row[6].toUpperCase()), new IntWritable(1));
         }
     }
 
@@ -220,7 +152,7 @@ public class Task11 extends Configured implements Tool {
         @Override
         protected void setup(Context context) throws IOException,InterruptedException {
             Configuration conf = context.getConfiguration();
-            this.N = conf.getInt("N", 10);
+            this.N = conf.getInt("N", 100);
         }
 
         @Override
@@ -245,60 +177,4 @@ public class Task11 extends Configured implements Tool {
             }
         }
     }
-
 }
-
-// >>> Don't Change
-class Pair<A extends Comparable<? super A>,
-        B extends Comparable<? super B>>
-        implements Comparable<Pair<A, B>> {
-
-    public final A first;
-    public final B second;
-
-    public Pair(A first, B second) {
-        this.first = first;
-        this.second = second;
-    }
-
-    public static <A extends Comparable<? super A>,
-            B extends Comparable<? super B>>
-    Pair<A, B> of(A first, B second) {
-        return new Pair<A, B>(first, second);
-    }
-
-    @Override
-    public int compareTo(Pair<A, B> o) {
-        int cmp = o == null ? 1 : (this.first).compareTo(o.first);
-        return cmp == 0 ? (this.second).compareTo(o.second) : cmp;
-    }
-
-    @Override
-    public int hashCode() {
-        return 31 * hashcode(first) + hashcode(second);
-    }
-
-    private static int hashcode(Object o) {
-        return o == null ? 0 : o.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof Pair))
-            return false;
-        if (this == obj)
-            return true;
-        return equal(first, ((Pair<?, ?>) obj).first)
-                && equal(second, ((Pair<?, ?>) obj).second);
-    }
-
-    private boolean equal(Object o1, Object o2) {
-        return o1 == o2 || (o1 != null && o1.equals(o2));
-    }
-
-    @Override
-    public String toString() {
-        return "(" + first + ", " + second + ')';
-    }
-}
-// <<< Don't Change

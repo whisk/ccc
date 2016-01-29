@@ -95,10 +95,10 @@ public class Task23 extends ImprovedTask implements Tool {
         public void map(Object lineNum, Text value, Context context) throws IOException, InterruptedException {
             String[] row = value.toString().split("\\s");
             try {
-                String origin = row[1];
-                String destination = row[2];
-                String carrier = row[0];
-                double arrDelay = Double.parseDouble(row[4]);
+                String origin = row[5];
+                String destination = row[6];
+                String carrier = row[4];
+                double arrDelay = Double.parseDouble(row[9]);
                 
                 // paired key = (origin-destination, carrier)
                 String pairedKey = (origin + "_" + destination + "-" + carrier).toUpperCase();
