@@ -63,7 +63,7 @@ public class Task24 extends ImprovedTask implements Tool {
         jobA.setMapperClass(OriginDestinationArrDelayMap.class);
         jobA.setReducerClass(ReduceAverage.class);
 
-        FileInputFormat.setInputPaths(jobA, Path.mergePaths(pathInputPrefix, new Path("/input")));
+        FileInputFormat.setInputPaths(jobA, pathInputPrefix);
         FileOutputFormat.setOutputPath(jobA, outPath);
 
         jobA.setJarByClass(Task24.class);

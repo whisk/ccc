@@ -128,13 +128,11 @@ public class Task12 extends ImprovedTask implements Tool {
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
             String[] row = value.toString().split("\\s");
             // sometimes delay not specified
-            double delay = 0.0;
             try {
-                delay = Double.parseDouble(row[2]);
+                double arrDelay = Double.parseDouble(row[9]);
+                context.write(new Text(row[3]), new DoubleWritable(arrDelay));
             } catch (Exception e) {
             }
-
-            context.write(new Text(row[0]), new DoubleWritable(delay));
         }
     }
 
