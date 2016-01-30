@@ -11,6 +11,8 @@ file_in = open(sys.argv[1], 'r')
 csv_reader = csv.reader(file_in, delimiter=',', quotechar='"')
 file_out = open(sys.argv[2], 'w')
 fields = sys.argv[3:]
+sep = ' '
+sep_replace = '~'
 
 header = csv_reader.next()
 l = 0
@@ -19,5 +21,5 @@ for row in csv_reader:
     if l == 1:
         continue
     for i in fields:
-        file_out.write(row[int(i)] + ' ') 
+        file_out.write(row[int(i)].replace(sep, sep_replace) + sep) 
     file_out.write("\n")
