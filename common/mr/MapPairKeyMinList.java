@@ -31,7 +31,7 @@ public class MapPairKeyMinList extends Mapper<Object, Text, Text, TextArrayWrita
         String key = row[0];
         Double val = Double.parseDouble(row[1].toString());
         // subkey is "key0-key1" pair
-        String[] subkey = key.toString().split("-"); // key[0] is the main key
+        String[] subkey = key.toString().split("-"); // subkey[0] is the main key
 
         if (! mainKeyToTreeMap.containsKey(subkey[0])) {
             mainKeyToTreeMap.put(subkey[0], new TreeSet<Pair<Double, String>>());
