@@ -26,7 +26,7 @@ public class Pair<A extends Comparable<? super A>,
 
     @Override
     public int hashCode() {
-        return 31 * hashcode(first) + hashcode(second);
+        return 63 * hashcode(first) + hashcode(second);
     }
 
     private static int hashcode(Object o) {
