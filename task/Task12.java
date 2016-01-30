@@ -9,7 +9,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.ArrayWritable;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.DoubleWritable;
+import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -59,7 +59,7 @@ public class Task12 extends ImprovedTask implements Tool {
         // Carrier Delay
         Job jobCD = Job.getInstance(conf, "Carrier Delay");
         jobCD.setOutputKeyClass(Text.class);
-        jobCD.setOutputValueClass(DoubleWritable.class);
+        jobCD.setOutputValueClass(FloatWritable.class);
 
         jobCD.setMapperClass(CarrierArrDelayMap.class);
         jobCD.setReducerClass(ReduceAverage.class);
@@ -74,7 +74,7 @@ public class Task12 extends ImprovedTask implements Tool {
         // Weekday Delay
         Job jobWD = Job.getInstance(conf, "Weekday Delay");
         jobWD.setOutputKeyClass(Text.class);
-        jobWD.setOutputValueClass(DoubleWritable.class);
+        jobWD.setOutputValueClass(FloatWritable.class);
 
         jobWD.setMapperClass(WeekdayDelayMap.class);
         jobWD.setReducerClass(ReduceAverage.class);
@@ -89,7 +89,7 @@ public class Task12 extends ImprovedTask implements Tool {
         // min carrier delay
         Job jobMD = Job.getInstance(conf, "Min Carrier Delay");
         jobMD.setOutputKeyClass(Text.class);
-        jobMD.setOutputValueClass(DoubleWritable.class);
+        jobMD.setOutputValueClass(FloatWritable.class);
 
         jobMD.setMapOutputKeyClass(NullWritable.class);
         jobMD.setMapOutputValueClass(TextArrayWritable.class);
@@ -110,27 +110,27 @@ public class Task12 extends ImprovedTask implements Tool {
         return jobMD.waitForCompletion(true)? 0 : 1;
     }
 
-    public static class CarrierArrDelayMap extends Mapper<Object, Text, Text, DoubleWritable> {
+    public static class CarrierArrDelayMap extends Mapper<Object, Text, Text, FloatWritable> {
         @Override
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
             String[] row = value.toString().split("\\s");
             // sometimes delay not specified
             try {
-                double arrDelay = Double.parseDouble(row[9]);
-                context.write(new Text(row[4].toUpperCase()), new DoubleWritable(arrDelay));
+                Float arrDelay = Float.parseFloat(row[9]);
+                context.write(new Text(row[4].toUpperCase()), new FloatWritable(arrDelay));
             } catch (Exception e) {
             }
         }
     }
 
-    public static class WeekdayDelayMap extends Mapper<Object, Text, Text, DoubleWritable> {
+    public static class WeekdayDelayMap extends Mapper<Object, Text, Text, FloatWritable> {
         @Override
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
             String[] row = value.toString().split("\\s");
             // sometimes delay not specified
             try {
-                double arrDelay = Double.parseDouble(row[9]);
-                context.write(new Text(row[3]), new DoubleWritable(arrDelay));
+                Float arrDelay = Float.parseFloat(row[9]);
+                context.write(new Text(row[3]), new FloatWritable(arrDelay));
             } catch (Exception e) {
             }
         }
@@ -138,7 +138,7 @@ public class Task12 extends ImprovedTask implements Tool {
 
     public static class MinMap extends Mapper<Text, Text, NullWritable, TextArrayWritable> {
         Integer N;
-        private TreeSet<Pair<Double, String>> countToWordMap = new TreeSet<Pair<Double, String>>();
+        private TreeSet<Pair<Float, String>> countToWordMap = new TreeSet<Pair<Float, String>>();
 
         @Override
         protected void setup(Context context) throws IOException,InterruptedException {
@@ -148,10 +148,10 @@ public class Task12 extends ImprovedTask implements Tool {
 
         @Override
         public void map(Text key, Text value, Context context) throws IOException, InterruptedException {
-            Double count = Double.parseDouble(value.toString());
+            Float count = Float.parseFloat(value.toString());
             String word = key.toString();
 
-            countToWordMap.add(new Pair<Double, String>(count, word));
+            countToWordMap.add(new Pair<Float, String>(count, word));
 
             if (countToWordMap.size() > this.N) {
                 countToWordMap.remove(countToWordMap.last());
@@ -160,7 +160,7 @@ public class Task12 extends ImprovedTask implements Tool {
 
         @Override
         protected void cleanup(Context context) throws IOException, InterruptedException {
-            for (Pair<Double, String> item : countToWordMap) {
+            for (Pair<Float, String> item : countToWordMap) {
                 String[] strings = {item.second, item.first.toString()};
                 TextArrayWritable val = new TextArrayWritable(strings);
                 context.write(NullWritable.get(), val);
@@ -168,9 +168,9 @@ public class Task12 extends ImprovedTask implements Tool {
         }
     }
 
-    public static class MinReduce extends Reducer<NullWritable, TextArrayWritable, Text, DoubleWritable> {
+    public static class MinReduce extends Reducer<NullWritable, TextArrayWritable, Text, FloatWritable> {
         Integer N;
-        private TreeSet<Pair<Double, String>> countToWordMap = new TreeSet<Pair<Double, String>>();
+        private TreeSet<Pair<Float, String>> countToWordMap = new TreeSet<Pair<Float, String>>();
 
         @Override
         protected void setup(Context context) throws IOException,InterruptedException {
@@ -184,18 +184,18 @@ public class Task12 extends ImprovedTask implements Tool {
                 Text[] pair= (Text[]) val.toArray();
 
                 String word = pair[0].toString();
-                Double count = Double.parseDouble(pair[1].toString());
+                Float count = Float.parseFloat(pair[1].toString());
 
-                countToWordMap.add(new Pair<Double, String>(count, word));
+                countToWordMap.add(new Pair<Float, String>(count, word));
 
                 if (countToWordMap.size() > this.N) {
                     countToWordMap.remove(countToWordMap.last());
                 }
             }
 
-            for (Pair<Double, String> item: countToWordMap) {
+            for (Pair<Float, String> item: countToWordMap) {
                 Text word = new Text(item.second);
-                DoubleWritable value = new DoubleWritable(item.first);
+                FloatWritable value = new FloatWritable(item.first);
                 context.write(word, value);
             }
         }

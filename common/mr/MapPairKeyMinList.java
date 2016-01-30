@@ -17,7 +17,7 @@ import common.TextArrayWritable;
 // maps : (key1-key2 val12) (key1-key3 val13) ... -> (key1 key2=val12|key3=val13)
 public class MapPairKeyMinList extends Mapper<Object, Text, Text, TextArrayWritable> {
     Integer N;
-    private Map<String, TreeSet<Pair<Double,String>>> mainKeyToTreeMap = new HashMap<String, TreeSet<Pair<Double,String>>>();
+    private Map<String, TreeSet<Pair<Float,String>>> mainKeyToTreeMap = new HashMap<String, TreeSet<Pair<Float,String>>>();
 
     @Override
     protected void setup(Context context) throws IOException,InterruptedException {
@@ -29,15 +29,15 @@ public class MapPairKeyMinList extends Mapper<Object, Text, Text, TextArrayWrita
     public void map(Object lineNum, Text value, Context context) throws IOException, InterruptedException {
         String[] row = value.toString().split("\\s");
         String key = row[0];
-        Double val = Double.parseDouble(row[1].toString());
+        Float val = Float.parseFloat(row[1].toString());
         // subkey is "key0-key1" pair
         String[] subkey = key.toString().split("-"); // subkey[0] is the main key
 
         if (! mainKeyToTreeMap.containsKey(subkey[0])) {
-            mainKeyToTreeMap.put(subkey[0], new TreeSet<Pair<Double, String>>());
+            mainKeyToTreeMap.put(subkey[0], new TreeSet<Pair<Float, String>>());
         }
-        TreeSet<Pair<Double, String>> tree = mainKeyToTreeMap.get(subkey[0]);
-        tree.add(new Pair<Double, String>(val, subkey[1])); // add secondary key
+        TreeSet<Pair<Float, String>> tree = mainKeyToTreeMap.get(subkey[0]);
+        tree.add(new Pair<Float, String>(val, subkey[1])); // add secondary key
 
         if (tree.size() > this.N) {
             tree.remove(tree.last());
@@ -48,7 +48,7 @@ public class MapPairKeyMinList extends Mapper<Object, Text, Text, TextArrayWrita
     protected void cleanup(Context context) throws IOException, InterruptedException {
         for (String mainKey : mainKeyToTreeMap.keySet()) {
             List<String> values = new ArrayList<String>();
-            for (Pair<Double, String> item : (TreeSet<Pair<Double, String>>) mainKeyToTreeMap.get(mainKey)) {
+            for (Pair<Float, String> item : (TreeSet<Pair<Float, String>>) mainKeyToTreeMap.get(mainKey)) {
                 values.add(item.second + "=" + item.first.toString());
             }
             context.write(new Text(mainKey), new TextArrayWritable((String[]) values.toArray(new String[0])));

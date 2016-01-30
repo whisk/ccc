@@ -10,7 +10,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.ArrayWritable;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.DoubleWritable;
+import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -54,7 +54,7 @@ public class Task32 extends ImprovedTask implements Tool {
 
         Job jobA = Job.getInstance(conf, "Origin-Destination-Date-DepTime Mean Arrival Delay");
         jobA.setOutputKeyClass(Text.class);
-        jobA.setOutputValueClass(DoubleWritable.class);
+        jobA.setOutputValueClass(FloatWritable.class);
 
         jobA.setMapperClass(OriginDestinationDateDepTimeArrDelayMap.class);
         jobA.setReducerClass(ReduceAverage.class);
@@ -67,7 +67,7 @@ public class Task32 extends ImprovedTask implements Tool {
         return jobA.waitForCompletion(true) ? 0 : 1;
     }
 
-    public static class OriginDestinationDateDepTimeArrDelayMap extends Mapper<Object, Text, Text, DoubleWritable> {
+    public static class OriginDestinationDateDepTimeArrDelayMap extends Mapper<Object, Text, Text, FloatWritable> {
         private Logger log = Logger.getLogger(this.getClass());
 
         @Override
@@ -79,10 +79,10 @@ public class Task32 extends ImprovedTask implements Tool {
                 Formatter formatter = new Formatter(new StringBuilder());
                 String date = formatter.format("%04d:%02d:%02d", Integer.parseInt(row[0]), Integer.parseInt(row[1]), Integer.parseInt(row[2])).toString();
                 String time = row[7];
-                double arrDelay = Double.parseDouble(row[9]);
+                Float arrDelay = Float.parseFloat(row[9]);
                 
                 String key = (origin + "_" + destination + "_" + date + "_" + time).toUpperCase();
-                context.write(new Text(key), new DoubleWritable(arrDelay));
+                context.write(new Text(key), new FloatWritable(arrDelay));
             } catch (Exception e) {
                 // skip on error parsing
                 log.error(e);

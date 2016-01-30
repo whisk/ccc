@@ -9,7 +9,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.ArrayWritable;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.DoubleWritable;
+import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -57,7 +57,7 @@ public class Task21 extends ImprovedTask implements Tool {
 
         Job jobA = Job.getInstance(conf, "Origin-Carrier Departure Delay");
         jobA.setOutputKeyClass(Text.class);
-        jobA.setOutputValueClass(DoubleWritable.class);
+        jobA.setOutputValueClass(FloatWritable.class);
 
         jobA.setMapperClass(OriginCarrierDepDelayMap.class);
         jobA.setReducerClass(ReduceAverage.class);
@@ -87,17 +87,17 @@ public class Task21 extends ImprovedTask implements Tool {
         return jobB.waitForCompletion(true)? 0 : 1;
     }
 
-    public static class OriginCarrierDepDelayMap extends Mapper<Object, Text, Text, DoubleWritable> {
+    public static class OriginCarrierDepDelayMap extends Mapper<Object, Text, Text, FloatWritable> {
         @Override
         public void map(Object lineNum, Text value, Context context) throws IOException, InterruptedException {
             String[] row = value.toString().split("\\s");
             try {
                 String origin = row[5];
                 String carrier = row[4];
-                double depDelay = Double.parseDouble(row[8]);
+                Float depDelay = Float.parseFloat(row[8]);
                 
                 String orgCarr = (origin + "-" + carrier).toUpperCase();
-                context.write(new Text(orgCarr), new DoubleWritable(depDelay));
+                context.write(new Text(orgCarr), new FloatWritable(depDelay));
             } catch (Exception e) {
                 // skip on error parsing
             }

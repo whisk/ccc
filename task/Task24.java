@@ -9,7 +9,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.ArrayWritable;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.DoubleWritable;
+import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -58,7 +58,7 @@ public class Task24 extends ImprovedTask implements Tool {
 
         Job jobA = Job.getInstance(conf, "Origin-Destination mean arrival delay");
         jobA.setOutputKeyClass(Text.class);
-        jobA.setOutputValueClass(DoubleWritable.class);
+        jobA.setOutputValueClass(FloatWritable.class);
 
         jobA.setMapperClass(OriginDestinationArrDelayMap.class);
         jobA.setReducerClass(ReduceAverage.class);
@@ -71,17 +71,17 @@ public class Task24 extends ImprovedTask implements Tool {
         return jobA.waitForCompletion(true) ? 0 : 1;
     }
 
-    public static class OriginDestinationArrDelayMap extends Mapper<Object, Text, Text, DoubleWritable> {
+    public static class OriginDestinationArrDelayMap extends Mapper<Object, Text, Text, FloatWritable> {
         @Override
         public void map(Object lineNum, Text value, Context context) throws IOException, InterruptedException {
             String[] row = value.toString().split("\\s");
             try {
                 String origin = row[5];
                 String destination = row[6];
-                double arrDelay = Double.parseDouble(row[9]);
+                Float arrDelay = Float.parseFloat(row[9]);
                 
                 String key = (origin + "_" + destination).toUpperCase();
-                context.write(new Text(key), new DoubleWritable(arrDelay));
+                context.write(new Text(key), new FloatWritable(arrDelay));
             } catch (Exception e) {
                 // skip on error parsing
             }
