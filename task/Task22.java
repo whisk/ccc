@@ -35,7 +35,7 @@ import java.util.HashMap;
 import common.ImprovedTask;
 import common.TextArrayWritable;
 import common.Pair;
-import common.mr.ReduceAverage;
+import common.mr.ReduceAverageWithThreshold;
 import common.mr.MapPairKeyMinList;
 import common.mr.ReducePairKeyMinList;
 
@@ -63,7 +63,7 @@ public class Task22 extends ImprovedTask implements Tool {
         jobA.setOutputValueClass(DoubleWritable.class);
 
         jobA.setMapperClass(OriginDestinationDepDelayMap.class);
-        jobA.setReducerClass(ReduceAverage.class);
+        jobA.setReducerClass(ReduceAverageWithThreshold.class);
 
         FileInputFormat.setInputPaths(jobA, pathInputPrefix);
         FileOutputFormat.setOutputPath(jobA, tmpPath);
