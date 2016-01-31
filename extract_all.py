@@ -21,6 +21,11 @@ except OSError as e:
     if e.errno != errno.EEXIST:
         os.exit(1)
 
+code = Popen(["hdfs", "dfs", "-mkdir", "-p", hdfs_path]).wait()
+if code != 0:
+    print "Error with HDFS path %s" % hdfs_path
+    os.exit(1)
+
 zip_fnames = Popen(['find', dataset_path, '-type', 'f', '-name', '*.zip'], stdout=subprocess.PIPE).stdout.readlines()
 
 print "Found %d zip files" % len(zip_fnames)
