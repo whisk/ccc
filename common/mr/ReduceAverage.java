@@ -8,7 +8,7 @@ import java.io.IOException;
 public class ReduceAverage extends Reducer<Text, FloatWritable, Text, FloatWritable> {
     @Override
     public void reduce(Text key, Iterable<FloatWritable> values, Context context) throws IOException, InterruptedException {
-        Float sum = 0.0;
+        float sum = 0;
         long cnt = 0;
         for (FloatWritable val : values) {
             sum += val.get();
