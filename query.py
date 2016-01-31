@@ -32,17 +32,49 @@ except Exception as e:
     print e
     sys.exit(1)
 
-if args.task == 'Task21':
-    print "Enter origin code: "
-    origin = raw_input().strip().upper()
+def simple_query(table_name, key_name, key):
     rows = []
-    for row in cass.execute('select origin, carriers from top_carriers_by_origin where origin = %s', [origin]):
+    for row in cass.execute('select * from %s where %s = %%s' % (table_name, key_name), [key]):
         rows += [row]
+    return rows
+
+def display_list(rows, val, label):
     if len(rows) == 0:
-        print "Nothing found for %s" % origin
+        print 'Nothing found'
     else:
-        print "Top Carriers for %s:" % origin
-        for z in rows[0].carriers.split(' '):
+        print label
+        for z in getattr(rows[0], val).split(' '):
             [c, r] = z.split('=')
             print "%s %0.2f" % (c, float(r))
 
+def display_val(rows, val, fmt, label):
+    if len(rows) == 0:
+        print 'Nothing found'
+    else:
+        print label
+        print fmt % getattr(rows[0], val)
+
+if args.task == 'Task21':
+    print "Enter origin code: "
+    origin = raw_input().strip().upper()
+    rows = simple_query('top_carriers_by_origin', 'origin', origin)
+    display_list(rows, 'carriers', 'Top Carriers for %s' % origin)
+elif args.task == 'Task22':
+    print "Enter origin code: "
+    origin = raw_input().strip().upper()
+    rows = simple_query('top_destinations_by_origin', 'origin', origin)
+    display_list(rows, 'destinations', 'Top Destinations for %s' % origin)
+elif args.task == 'Task23':
+    print "Enter origin code: "
+    origin = raw_input().strip().upper()
+    print "Enter destination code: "
+    dest = raw_input().strip().upper()
+    rows = simple_query('top_carriers_by_route', 'route', origin + '_' + dest)
+    display_list(rows, 'carriers', 'Top Destinations for route %s -> %s' % (origin, dest))
+elif args.task == 'Task24':
+    print "Enter origin code: "
+    origin = raw_input().strip().upper()
+    print "Enter destination code: "
+    dest = raw_input().strip().upper()
+    rows = simple_query('arrival_delay_by_route', 'route', origin + '_' + dest)
+    display_val(rows, 'arrival_delay', '%0.2f', 'Mean Arrival Delay for route %s -> %s' % (origin, dest))
