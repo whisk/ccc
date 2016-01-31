@@ -74,15 +74,18 @@ public class Task32 extends ImprovedTask implements Tool {
         public void map(Object lineNum, Text value, Context context) throws IOException, InterruptedException {
             String[] row = value.toString().split("\\s");
             try {
-                String origin = row[5];
-                String destination = row[6];
-                Formatter formatter = new Formatter(new StringBuilder());
-                String date = formatter.format("%04d:%02d:%02d", Integer.parseInt(row[0]), Integer.parseInt(row[1]), Integer.parseInt(row[2])).toString();
-                String time = row[7];
-                Float arrDelay = Float.parseFloat(row[9]);
-                
-                String key = (origin + "_" + destination + "_" + date + "_" + time).toUpperCase();
-                context.write(new Text(key), new FloatWritable(arrDelay));
+                String year = row[0];
+                if (year.equals("2008")) {
+                    String origin = row[5];
+                    String destination = row[6];
+                    Formatter formatter = new Formatter(new StringBuilder());
+                    String date = formatter.format("%04d:%02d:%02d", Integer.parseInt(row[0]), Integer.parseInt(row[1]), Integer.parseInt(row[2])).toString();
+                    String time = row[7];
+                    Float arrDelay = Float.parseFloat(row[9]);
+                    
+                    String key = (origin + "_" + destination + "_" + date + "_" + time).toUpperCase();
+                    context.write(new Text(key), new FloatWritable(arrDelay));
+                }
             } catch (Exception e) {
                 // skip on error parsing
                 log.error(e);
