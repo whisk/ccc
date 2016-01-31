@@ -3,10 +3,15 @@
 N=10
 
 OPTIND=1  
-while getopts "n:" opt; do
+HDFS_INPUT_PATH="/ccc/input/"
+
+while getopts "n:i:" opt; do
   case $opt in
     n)
       N=$OPTARG
+      ;;
+    i)
+      HDFS_INPUT_PATH=$OPTARG
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
@@ -21,8 +26,8 @@ shift $((OPTIND-1))
 [ "$1" = "--" ] && shift
 
 NAME=$1
-HDFS_INPUT_PATH=$2
 HDFS_OUTPUT_PATH="/ccc/$NAME/"
+LOGFILE="logs/$NAME-`date +"%Y%m%d%H%M%S"`.log"
 
 if [[ -z $NAME ]]; then
     echo "No task given"
@@ -34,6 +39,8 @@ if [[ -z $HDFS_INPUT_PATH ]]; then
     exit 1
 fi
 
-$HADOOP_INSTALL/bin/hdfs dfs -mkdir -p $HDFS_OUTPUT_PATH || true 
+echo "Input path: $HDFS_INPUT_PATH"
+echo "Output path: $HDFS_OUTPUT_PATH"
 
-$HADOOP_INSTALL/bin/hadoop jar jars/$NAME.jar task.$NAME -D N=$N $HDFS_INPUT_PATH $HDFS_OUTPUT_PATH
+$HADOOP_INSTALL/bin/hdfs dfs -mkdir -p $HDFS_OUTPUT_PATH || true 
+/usr/bin/nohup $HADOOP_INSTALL/bin/hadoop jar jars/$NAME.jar task.$NAME -D N=$N $HDFS_INPUT_PATH $HDFS_OUTPUT_PATH > $LOGFILE 2>&1 &
