@@ -9,6 +9,7 @@ from cassandra.cluster import Cluster
 import argparse
 import sys
 import re
+import datetime
 
 AVAIL_TASKS   = ['Task21', 'Task22', 'Task23', 'Task24', 'Task32']
 DEFAULT_HOSTS = ['10.0.223.125', '10.0.55.140']
@@ -78,3 +79,19 @@ elif args.task == 'Task24':
     dest = raw_input().strip().upper()
     rows = simple_query('arrival_delay_by_route', 'route', origin + '_' + dest)
     display_val(rows, 'arrival_delay', '%0.2f', 'Mean Arrival Delay for route %s -> %s' % (origin, dest))
+elif args.task == 'Task32':
+    print "Enter X Y Z YYYY-MM-DD: "
+    (x, y, z, dep_date_raw) = re.split('\s+', raw_input().strip().upper())
+    (y, m, d) = dep_date_raw.split('-')
+    dd1 = datetime.date(int(y), int(m), int(d));
+    dd2 = datetime.date(int(y), int(m), int(d) + 2);
+    leg1 = []
+    print dd1.strftime('%Y-%m-%d')
+    for row in cass.execute('select * from trips where origin = %s and destination = %s and departure_date = %s', [x, y, dd1.strftime('%Y-%m-%d')]):
+        leg1 += [row]
+    print leg1
+    leg2 = []
+    for row in cass.execute('select * from trips where origin = %s and destination = %s and departure_date = %s', [y, z, dd2.strftime('%Y-%m-%d')]):
+        leg2 += [row]
+    print leg2
+
