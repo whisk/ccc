@@ -5,6 +5,7 @@ from subprocess import Popen
 import re
 import os
 import errno
+import time
 
 # data paths
 dataset_path = '/dataset/aviation/airline_ontime/'
@@ -33,6 +34,7 @@ i = 0
 sum_raw_size = 0.0
 sum_extr_size = 0.0
 sum_lines = 0
+t1 = time.time()
 for zip_fname in zip_fnames:
     i += 1
     print "Processing zip %d/%d" % (i, len(zip_fnames))
@@ -70,3 +72,4 @@ for zip_fname in zip_fnames:
 print "Raw size: %0.2fG" % (sum_raw_size / 1024 / 1024 / 1024)
 print "Extracted size: %0.2fG" % (sum_extr_size / 1024 / 1024 / 1024)
 print "Total lines: %d" % sum_lines
+print "Total time: %0.2fs" % (time.time() - t1)
