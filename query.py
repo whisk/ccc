@@ -48,6 +48,18 @@ def display_list(rows, val, label):
             [c, r] = z.split('=')
             print "%s %0.2f" % (c, float(r))
 
+def flight_query(x, y, d, time_min, time_max):
+    flights = []
+    for row in cass.execute('select * from trips where origin = %s and destination = %s and departure_date = %s', [x, y, d.strftime('%Y-%m-%d')]):
+        if row.departure_time >= time_min and row.departure_time <= time_max:
+            flights += [row]
+
+    flights = sorted(flights, key=lambda f: f.departure_delay)
+    return flights[0] if len(flights) > 0 else None
+
+def display_flight(f):
+    print "Time %04s, Delay %d" % (f.departure_time, f.departure_delay)
+
 def display_val(rows, val, fmt, label):
     if len(rows) == 0:
         print 'Nothing found'
@@ -82,16 +94,11 @@ elif args.task == 'Task24':
 elif args.task == 'Task32':
     print "Enter X Y Z YYYY-MM-DD: "
     (x, y, z, dep_date_raw) = re.split('\s+', raw_input().strip().upper())
-    (y, m, d) = dep_date_raw.split('-')
-    dd1 = datetime.date(int(y), int(m), int(d));
-    dd2 = datetime.date(int(y), int(m), int(d) + 2);
-    leg1 = []
-    print dd1.strftime('%Y-%m-%d')
-    for row in cass.execute('select * from trips where origin = %s and destination = %s and departure_date = %s', [x, y, dd1.strftime('%Y-%m-%d')]):
-        leg1 += [row]
-    print leg1
-    leg2 = []
-    for row in cass.execute('select * from trips where origin = %s and destination = %s and departure_date = %s', [y, z, dd2.strftime('%Y-%m-%d')]):
-        leg2 += [row]
-    print leg2
+    (year, m, d) = dep_date_raw.split('-')
+    dd1 = datetime.date(int(year), int(m), int(d));
+    dd2 = datetime.date(int(year), int(m), int(d) + 2);
+    leg1 = flight_query(x, y, dd1, 0, 1200)
+    leg2 = flight_query(y, z, dd2, 1200, 2400)
+    display_flight(leg1)
+    display_flight(leg2)
 

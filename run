@@ -44,4 +44,4 @@ echo "Output path: $HDFS_OUTPUT_PATH"
 echo "Logfile: $LOGFILE"
 
 $HADOOP_INSTALL/bin/hdfs dfs -mkdir -p $HDFS_OUTPUT_PATH || true 
-/usr/bin/nohup $HADOOP_INSTALL/bin/hadoop jar jars/$NAME.jar task.$NAME -D N=$N $HDFS_INPUT_PATH $HDFS_OUTPUT_PATH > $LOGFILE 2>&1 &
+/usr/bin/time -p $HADOOP_INSTALL/bin/hadoop jar jars/$NAME.jar task.$NAME -D N=$N $HDFS_INPUT_PATH $HDFS_OUTPUT_PATH > $LOGFILE 2>&1 &
