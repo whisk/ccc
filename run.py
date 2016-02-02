@@ -44,10 +44,21 @@ for task_name in args.tasks:
   processes[task_name]   = Popen(['hadoop', 'jar', 'jars/%s.jar' % task_name, 'task.%s' % task_name, '-D', 'N=%d' % args.n, hdfs_input_path, hdfs_output_path], stdout=logfile, stderr=logfile)
   start_times[task_name] = time.time() 
 
+proc_cnt = len(processes)
 while True:
   for task_name in processes:
+    if processes[task_name] == None:
+      # skip finished processes 
+      continue
     sys.stdout.write('.')
+    sys.stdout.flush()
     ret = processes[task_name].poll()
     if ret != None:
-      sys.stdout.write("\n\nFinished %s\n\tRun time: %0.2fs\n\n" % (task_name, time.time() - start_times[task_name]))
+      # process has finished working
+      sys.stdout.write("\n\nFinished %s\n\tExit code: %d\n\tRun time: %0.2fs\n\n" % (task_name, ret, time.time() - start_times[task_name]))
+      processes[task_name] = None
+      proc_cnt -= 1
+
+  if proc_cnt == 0:
+      break
   time.sleep(5)
