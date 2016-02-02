@@ -41,7 +41,7 @@ for task_name in args.tasks:
   hdfs_output_path = args.output + '/' + task_name + '/'
   sys.stdout.write("Starting %s...\n\tLogfile: %s\n\tOutput path: %s\n" % (task_name, logfile_fname, hdfs_output_path))
   # run hadoop task
-  processes[task_name]   = Popen(['hadoop', 'jar', 'jars/%s.jar' % task_name, '-D', 'N=%d' % args.n, hdfs_input_path, hdfs_output_path], stdout=logfile, stderr=logfile)
+  processes[task_name]   = Popen(['hadoop', 'jar', 'jars/%s.jar' % task_name, 'task.%s' % task_name, '-D', 'N=%d' % args.n, hdfs_input_path, hdfs_output_path], stdout=logfile, stderr=logfile)
   start_times[task_name] = time.time() 
 
 while True:
