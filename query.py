@@ -83,7 +83,7 @@ elif args.task == 'Task23':
     print "Enter destination code: "
     dest = raw_input().strip().upper()
     rows = simple_query('top_carriers_by_route', 'route', origin + '_' + dest)
-    display_list(rows, 'carriers', 'Top Destinations for route %s -> %s' % (origin, dest))
+    display_list(rows, 'carriers', 'Top Carriers for route %s -> %s' % (origin, dest))
 elif args.task == 'Task24':
     print "Enter origin code: "
     origin = raw_input().strip().upper()
