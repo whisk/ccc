@@ -78,17 +78,13 @@ elif args.task == 'Task22':
     rows = simple_query('top_destinations_by_origin', 'origin', origin)
     display_list(rows, 'destinations', 'Top Destinations for %s' % origin)
 elif args.task == 'Task23':
-    print "Enter origin code: "
-    origin = raw_input().strip().upper()
-    print "Enter destination code: "
-    dest = raw_input().strip().upper()
+    print "Enter origin and destinations codes: "
+    (origin, dest) = re.split('\s+', raw_input().strip().upper())
     rows = simple_query('top_carriers_by_route', 'route', origin + '_' + dest)
     display_list(rows, 'carriers', 'Top Carriers for route %s -> %s' % (origin, dest))
 elif args.task == 'Task24':
-    print "Enter origin code: "
-    origin = raw_input().strip().upper()
-    print "Enter destination code: "
-    dest = raw_input().strip().upper()
+    print "Enter origin and destinations codes: "
+    (origin, dest) = re.split('\s+', raw_input().strip().upper())
     rows = simple_query('arrival_delay_by_route', 'route', origin + '_' + dest)
     display_val(rows, 'arrival_delay', '%0.2f', 'Mean Arrival Delay for route %s -> %s' % (origin, dest))
 elif args.task == 'Task32':
