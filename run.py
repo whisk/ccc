@@ -29,26 +29,25 @@ if args.host == None:
     args.host = CASSANDRA_HOSTS
 
 if args.tasks == ['all']:
-	args.tasks = AVAIL_TASKS
+  args.tasks = AVAIL_TASKS
 
 t1 = datetime.datetime.now()
 processes   = {}
 start_times = {}
 for task_name in args.tasks:
-	logfile_fname = "logs/%s-%s.log" % (task_name, t1.strftime('%Y%m%d%H%M%S'))
-	logfile = open(logfile_fname, 'w')
-	hdfs_input_path  = args.input
-	hdfs_output_path = args.output + '/' + task_name + '/'
-	sys.stdout.write("Starting %s...\n\tLogfile: %s\n\tOutput path: %s\n" % (task_name, logfile_fname, hdfs_output_path))
-	# run hadoop task
-	processes[task_name]   = Popen(['hadoop', 'jar', 'jars/%s.jar' % task_name, '-D', 'N=%d' % args.n, hdfs_input_path, hdfs_output_path], stdout=logfile, stderr=logfile)
-	start_times[task_name] = time.time() 
+  logfile_fname = "logs/%s-%s.log" % (task_name, t1.strftime('%Y%m%d%H%M%S'))
+  logfile = open(logfile_fname, 'w')
+  hdfs_input_path  = args.input
+  hdfs_output_path = args.output + '/' + task_name + '/'
+  sys.stdout.write("Starting %s...\n\tLogfile: %s\n\tOutput path: %s\n" % (task_name, logfile_fname, hdfs_output_path))
+  # run hadoop task
+  processes[task_name]   = Popen(['hadoop', 'jar', 'jars/%s.jar' % task_name, '-D', 'N=%d' % args.n, hdfs_input_path, hdfs_output_path], stdout=logfile, stderr=logfile)
+  start_times[task_name] = time.time() 
 
 while True:
-	for task_name in processes:
-		print 'Checking %s' % task_name
-		ret = processes[task_name].poll()
-		if ret != None:
-			print "Finished %s\n\tRun time: %0.2fs" % (task_name, time.time() - start_times[task_name])
-		time.sleep(1)
-
+  for task_name in processes:
+    sys.stdout.write('.')
+    ret = processes[task_name].poll()
+    if ret != None:
+      sys.stdout.write("\n\nFinished %s\n\tRun time: %0.2fs\n\n" % (task_name, time.time() - start_times[task_name]))
+  time.sleep(5)
