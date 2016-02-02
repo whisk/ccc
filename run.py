@@ -9,9 +9,10 @@ import argparse
 import sys
 import datetime
 import time
+import subprocess
 from subprocess import Popen
 
-AVAIL_TASKS     = ['Task11', 'Task12', 'Task13', 'Task21', 'Task22', 'Task23', 'Task24', 'Task32']
+AVAIL_TASKS     = ['Task11', 'Task12', 'Task21', 'Task22', 'Task23', 'Task24', 'Task32']
 CASSANDRA_HOSTS = ['10.0.223.125', '10.0.55.140']
 CASSANDRA_TASKS = ['Task21', 'Task22', 'Task23', 'Task24']
 
@@ -20,21 +21,21 @@ parser.add_argument('tasks', nargs='+', choices=AVAIL_TASKS + ['all'],  help='Ta
 parser.add_argument('-n',               default=10,           help='N value')
 parser.add_argument('-i', '--input',    default='/ccc/input', help='HDFS input path')
 parser.add_argument('-o', '--output',   default='/ccc',       help='HDFS output path prefix')
-parser.add_argument('-k', '--keyspace', default='ccc_1',      help='Cassandra DB Keyspace')
-parser.add_argument('--host',           action='append',      help='Cassandra DB Host')
-parser.add_argument('-t', '--truncate', action='store_true',  default=True, help='Truncate before insertion')
+#parser.add_argument('-k', '--keyspace', default='ccc_1',      help='Cassandra DB Keyspace')
+#parser.add_argument('--host',           action='append',      help='Cassandra DB Host')
+#parser.add_argument('-t', '--truncate', action='store_true',  default=True, help='Truncate before insertion')
 args = parser.parse_args()
 
-if args.host == None:
-    args.host = CASSANDRA_HOSTS
+#if args.host == None:
+#    args.host = CASSANDRA_HOSTS
 
 if args.tasks == ['all']:
   args.tasks = AVAIL_TASKS
 
 def run_cassandra_insert(task_name):
   print "Inserting to Cassandra for %s" % task_name
-  p1 = Popen(['hdfs', 'dfs', '-cat', args.output + '/' + task_name + '/*'], stdout=subprocess.PIPE)
-  p2 = Popen(['./cassandra_insert.py', task_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate(stdint=p1.stdout)
+  p1 = Popen(['hdfs', 'dfs', '-cat', args.output + '/' + task_name + '/output/*'], stdout=subprocess.PIPE)
+  p2 = Popen(['./cassandra_insert.py', '-t', task_name], stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   p2.wait()
   print "Done inserting for %s" % task_name
 
