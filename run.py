@@ -19,7 +19,7 @@ parser = argparse.ArgumentParser(description='cmdline run tool for CCC Part 1')
 parser.add_argument('tasks', nargs='+', choices=AVAIL_TASKS + ['all'],  help='Task Name')
 parser.add_argument('-n',               default=10,           help='N value')
 parser.add_argument('-i', '--input',    default='/ccc/input', help='HDFS input path')
-parser.add_argument('-o', '--output',   default='/ccc/',      help='HDFS output path prefix')
+parser.add_argument('-o', '--output',   default='/ccc',       help='HDFS output path prefix')
 parser.add_argument('-k', '--keyspace', default='ccc_1',      help='Cassandra DB Keyspace')
 parser.add_argument('--host',           action='append',      help='Cassandra DB Host')
 parser.add_argument('-t', '--truncate', action='store_true',  default=True, help='Truncate before insertion')
@@ -30,6 +30,13 @@ if args.host == None:
 
 if args.tasks == ['all']:
   args.tasks = AVAIL_TASKS
+
+def run_cassandra_insert(task_name):
+  print "Inserting to Cassandra for %s" % task_name
+  p1 = Popen(['hdfs', 'dfs', '-cat', args.output + '/' + task_name + '/*'], stdout=subprocess.PIPE)
+  p2 = Popen(['./cassandra_insert.py', task_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate(stdint=p1.stdout)
+  p2.wait()
+  print "Done inserting for %s" % task_name
 
 t1 = datetime.datetime.now()
 processes   = {}
@@ -50,15 +57,19 @@ while True:
     if processes[task_name] == None:
       # skip finished processes 
       continue
-    sys.stdout.write('.')
-    sys.stdout.flush()
     ret = processes[task_name].poll()
     if ret != None:
       # process has finished working
       sys.stdout.write("\n\nFinished %s\n\tExit code: %d\n\tRun time: %0.2fs\n\n" % (task_name, ret, time.time() - start_times[task_name]))
       processes[task_name] = None
       proc_cnt -= 1
+      # now import result to cassandra
+      if task_name in CASSANDRA_TASKS:
+        ret = run_cassandra_insert(task_name)
 
   if proc_cnt == 0:
-      break
+    # no running processes found
+    break
+  sys.stdout.write('.')
+  sys.stdout.flush()
   time.sleep(5)

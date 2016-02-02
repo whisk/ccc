@@ -2,7 +2,7 @@
 
 # 
 # Version: 1.0
-# Usage: ./to_cassandra.py <Task Name> < data
+# Usage: ./cassandra_insert.py <TaskN> < data
 # Requirements: cassandra-driver
 
 from cassandra.cluster import Cluster
