@@ -35,7 +35,6 @@ zip_fnames = Popen(['find', dataset_path, '-type', 'f', '-name', '*.zip'], stdou
 print "Found %d zip files" % len(zip_fnames)
 
 def unzipper(zip_fnames, result, idx):
-    i = 0
     sum_raw_size = 0.0
     sum_extr_size = 0.0
     sum_lines = 0
@@ -54,7 +53,7 @@ def unzipper(zip_fnames, result, idx):
                 code = Popen([extractor_bin, csv_fname, extr_fname] + [str(c) for c in extr_cols]).wait()
                 if code != 0:
                     print "Error extracting %s" % csv_fname
-                    next
+                    continue
 
                 sum_extr_size += os.stat(extr_fname).st_size
                 sum_lines += int(Popen(['wc', '-l', extr_fname], stdout=subprocess.PIPE).stdout.readlines()[0].split(' ')[0])
@@ -63,7 +62,7 @@ def unzipper(zip_fnames, result, idx):
                 code = Popen(['hdfs', 'dfs', '-put', '-f', extr_fname, hdfs_path]).wait()
                 if code != 0:
                     print "Error putting to HDFS"
-                    next
+                    continue
 
                 print "OK"
 
