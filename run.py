@@ -36,8 +36,10 @@ def run_cassandra_insert(task_name):
   print "Inserting to Cassandra for %s" % task_name
   p1 = Popen(['hdfs', 'dfs', '-cat', args.output + '/' + task_name + '/output/*'], stdout=subprocess.PIPE)
   p2 = Popen(['./cassandra_insert.py', '-t', task_name], stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-  p2.wait()
-  print "Done inserting for %s" % task_name
+  ret = p2.wait()
+  if ret == 0:
+    print "Done inserting for %s" % task_name
+  return ret
 
 t1 = datetime.datetime.now()
 processes   = {}
