@@ -18,7 +18,7 @@ CASSANDRA_TASKS = ['Task21', 'Task22', 'Task23', 'Task24']
 
 parser = argparse.ArgumentParser(description='cmdline run tool for CCC Part 1')
 parser.add_argument('tasks', nargs='+', choices=AVAIL_TASKS + ['all'],  help='Task Name')
-parser.add_argument('-n',               default=10,           help='N value')
+parser.add_argument('-n',               default=10, type=int, help='N value')
 parser.add_argument('-i', '--input',    default='/ccc/input', help='HDFS input path')
 parser.add_argument('-o', '--output',   default='/ccc',       help='HDFS output path prefix')
 #parser.add_argument('-k', '--keyspace', default='ccc_1',      help='Cassandra DB Keyspace')
