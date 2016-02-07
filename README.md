@@ -1,6 +1,6 @@
-# Cloud Computing Capstone
+# Codename CCC
 
-Cloud Computing Capstone 2016
+Codename CCC-2016
 
 ## Installing Hadoop 2.6/2.7 on Ubuntu 14 LTS
 
