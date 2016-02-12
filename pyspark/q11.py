@@ -3,7 +3,7 @@ from pyspark.streaming import StreamingContext
 from pyspark.streaming.kafka import KafkaUtils
 import sys
 
-BATCH_INTERVAL = 10
+BATCH_INTERVAL = 5
 hdfs_prefix = 'hdfs://hadoop-master:9000'
 TOP_N = 10
 
@@ -18,20 +18,20 @@ def extract_org_dest(line):
 
 def top_airports(rdd):
   global top
-  curr_top = rdd.top(TOP_N, key=lambda el: el[1])
-  # summ top and curr_top values
-  top_dict = {}
-  for el in top + curr_top:
+  curr = rdd.toLocalIterator()
+  # concat top and curr values
+  top_dict = dict(top)
+  for el in curr:
     k = el[0]
     if k in top_dict:
       top_dict[k] += el[1]
     else:
       top_dict[k] = el[1]
 
-  top = sorted(top_dict.items(), key=lambda el: el[1], reverse=True)[:TOP_N]
+  top = sorted(top_dict.items(), key=lambda el: el[1], reverse=True)
 
   print('=' * 80)
-  print(top)
+  print(top[:TOP_N])
   print('=' * 80)
 
 sc = SparkContext(appName='Airport Popularity')
