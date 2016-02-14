@@ -59,8 +59,9 @@ def top_airports(rdd):
   print('=' * 80)
   print(top[:args.n])
   print('=' * 80)
+  prepared_stmt = cass.prepare('insert into airport_popularity (airport, popularity) values (?, ?)')
   for el in top:
-    cass.execute('insert into airport_popularity (airport, popularity) values (%s, %s)', (el[0], el[1]))
+    cass.execute(prepared_stmt, (el[0], el[1]))
 
 sc = SparkContext(appName='Airport Popularity')
 ssc = StreamingContext(sc, args.batch_interval)
