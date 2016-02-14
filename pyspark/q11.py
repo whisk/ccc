@@ -1,20 +1,25 @@
 from pyspark import SparkContext, SparkConf
 from pyspark.streaming import StreamingContext
-from pyspark.streaming.kafka import KafkaUtils
+from cassandra.cluster import Cluster
+import argparse
 import sys
 import time
 
-BATCH_INTERVAL = 5
-hdfs_prefix = 'hdfs://hadoop-master:9000'
-idle_time_max = 60.0
-TOP_N = 10
+parser = argparse.ArgumentParser()
+parser.add_argument('input_dir',                         default='/ccc/input')
+parser.add_argument('-n',                                default=10)
+parser.add_argument('-p', '--hdfs-prefix',               default='hdfs://hadoop-master:9000')
+parser.add_argument('-b', '--batch-interval',            default=10)
+parser.add_argument('-k', '--cassandra-keyspace',        default='ccc_1')
+parser.add_argument('--cassandra-host', action='append', default=['cassandra-1', 'cassandra-2'])
+parser.add_argument('--idle-time',                       default=30)
+parser.add_argument('--run-interval',                    default=5)
+args = parser.parse_args()
 
+# 
 top = []
 ts_has_data = time.time()
 ts_no_data  = time.time()
-sc = SparkContext(appName='Airport Popularity')
-ssc = StreamingContext(sc, BATCH_INTERVAL)
-ssc.checkpoint(hdfs_prefix + '/checkpoint')
 
 def extract_org_dest(line):
   cols = line.split(' ')
@@ -27,7 +32,11 @@ def top_airports(rdd):
   global top
   global ts_has_data
   global ts_no_data
-  global ssc
+  global args
+
+  cluster = Cluster(args.cassandra_host)
+  cass = cluster.connect(args.cassandra_keyspace)
+
   curr = rdd.toLocalIterator()
   # concat top and curr values
   top_dict = dict(top)
@@ -46,25 +55,30 @@ def top_airports(rdd):
     ts_no_data = time.time()
   else:
     ts_has_data = time.time()
-  
 
   print('=' * 80)
-  print(top[:TOP_N])
+  print(top[:args.n])
   print('=' * 80)
+  for el in top:
+    cass.execute('insert into airport_popularity (airport, popularity) values (%s, %s)', (el[0], el[1]))
 
-dstream = ssc.textFileStream(hdfs_prefix + sys.argv[1])
+sc = SparkContext(appName='Airport Popularity')
+ssc = StreamingContext(sc, args.batch_interval)
+ssc.checkpoint(args.hdfs_prefix + '/checkpoint')
+
+dstream = ssc.textFileStream(args.hdfs_prefix + args.input_dir)
 dstream = dstream.flatMap(extract_org_dest).map(lambda airport: (airport, 1)).reduceByKey(lambda a, b: a + b)
 dstream.foreachRDD(top_airports)
 
 ssc.start()
 while True:
-  res = ssc.awaitTerminationOrTimeout(10)
+  res = ssc.awaitTerminationOrTimeout(args.run_interval)
   if res:
-    # stopped
+    # stopped elsewhere
     break
   else:
     # still running
-    if ts_no_data - ts_has_data > idle_time_max:
-      print("No data received for %s seconds, stopping..." % idle_time_max)
+    if ts_no_data - ts_has_data > args.idle_time:
+      print("No data received for %s seconds, stopping..." % args.idle_time)
       ssc.stop(stopSparkContext=True, stopGraceFully=True)
 
