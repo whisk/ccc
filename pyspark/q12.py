@@ -18,7 +18,7 @@ parser.add_argument('--run-interval',                    default=5)
 args = parser.parse_args()
 
 # 
-cassandra_table_name = 'airport_popularity'
+cassandra_table_name = 'carrier_performance'
 top = []
 ts_has_data = time.time()
 ts_no_data  = time.time()
@@ -27,14 +27,14 @@ def get_cass():
   cluster = Cluster(args.cassandra_host)
   return cluster.connect(args.cassandra_keyspace)
 
-def extract_org_dest(line):
+def extract_carr_arr_delay(line):
   cols = line.split(' ')
-  if len(cols) > 6:
-    return [cols[5], cols[6]]
-  else:
+  try:
+    return [(cols[4], (float(cols[9]), 1))]
+  except:
     return []
 
-def top_airports(rdd):
+def top_carriers(rdd):
   global top
   global ts_has_data
   global ts_no_data
@@ -51,11 +51,11 @@ def top_airports(rdd):
     total += 1
     k = el[0]
     if k in top_dict:
-      top_dict[k] += el[1]
+      top_dict[k] = (top_dict[k][0] + el[1][0], top_dict[k][1] + el[1][1])
     else:
       top_dict[k] = el[1]
   
-  top = sorted(top_dict.items(), key=lambda el: el[1], reverse=True)
+  top = sorted(top_dict.items(), key=lambda el: el[1][0] / el[1][1], reverse=True)
 
   if total == 0:
     ts_no_data = time.time()
@@ -65,18 +65,18 @@ def top_airports(rdd):
   print('=' * 80)
   print(top[:args.n])
   print('=' * 80)
-  prepared_stmt = cass.prepare('insert into %s (airport, popularity) values (?, ?)' % cassandra_table_name)
+  prepared_stmt = cass.prepare('insert into %s (carrier, arrival_delay) values (?, ?)' % cassandra_table_name)
   for el in top:
-    cass.execute(prepared_stmt, (el[0], el[1]))
+    cass.execute(prepared_stmt, (el[0], el[1][0] / el[1][1]))
 
 get_cass().execute('truncate %s' % cassandra_table_name)
 
-sc = SparkContext(appName='Airport Popularity')
+sc = SparkContext(appName='Carrier Performance')
 ssc = StreamingContext(sc, args.batch_interval)
 ssc.checkpoint(args.hdfs_prefix + '/checkpoint')
 
 dstream = ssc.textFileStream(args.hdfs_prefix + args.input_dir)
-dstream = dstream.flatMap(extract_org_dest).map(lambda airport: (airport, 1)).reduceByKey(lambda a, b: a + b).foreachRDD(top_airports)
+dstream = dstream.flatMap(extract_carr_arr_delay).reduceByKey(lambda a, b: (a[0] + b[0], a[1] + b[1])).foreachRDD(top_carriers)
 
 ssc.start()
 while True:
