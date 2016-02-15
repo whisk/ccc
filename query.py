@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # 
 # Version: 1.0
@@ -28,7 +28,7 @@ try:
     cluster = Cluster(args.host)
     cass = cluster.connect(args.keyspace)
 except Exception as e:
-    print e
+    print(e)
     sys.exit(1)
 
 def simple_query(table_name, key_name, key):
@@ -39,12 +39,12 @@ def simple_query(table_name, key_name, key):
 
 def display_list(rows, val, label):
     if len(rows) == 0:
-        print 'Nothing found'
+        print('Nothing found')
     else:
-        print label
+        print(label)
         for z in getattr(rows[0], val).split(' '):
             [c, r] = z.split('=')
-            print "%s %0.2f" % (c, float(r))
+            print("%s %0.2f" % (c, float(r)))
 
 def flight_query(x, y, d, time_min, time_max):
     flights = []
@@ -56,38 +56,38 @@ def flight_query(x, y, d, time_min, time_max):
     return flights[0] if len(flights) > 0 else None
 
 def display_flight(f):
-    print "%s->%s date %s time %04s, Delay %d" % (f.origin, f.destination, f.departure_date, f.departure_time, f.departure_delay)
+    print("%s->%s date %s time %04s, Delay %d" % (f.origin, f.destination, f.departure_date, f.departure_time, f.departure_delay))
 
 def display_val(rows, val, fmt, label):
     if len(rows) == 0:
-        print 'Nothing found'
+        print('Nothing found')
     else:
-        print label
-        print fmt % getattr(rows[0], val)
+        print(label)
+        print(fmt % getattr(rows[0], val))
 
 if args.task == 'Task21':
-    print "Enter origin code: "
-    origin = raw_input().strip().upper()
+    print("Enter origin code: ")
+    origin = input().strip().upper()
     rows = simple_query('top_carriers_by_origin', 'origin', origin)
     display_list(rows, 'carriers', 'Top Carriers for %s' % origin)
 elif args.task == 'Task22':
-    print "Enter origin code: "
-    origin = raw_input().strip().upper()
+    print("Enter origin code: ")
+    origin = input().strip().upper()
     rows = simple_query('top_destinations_by_origin', 'origin', origin)
     display_list(rows, 'destinations', 'Top Destinations for %s' % origin)
 elif args.task == 'Task23':
-    print "Enter origin and destinations codes: "
-    (origin, dest) = re.split('\s+', raw_input().strip().upper())
+    print("Enter origin and destinations codes: ")
+    (origin, dest) = re.split('\s+', input().strip().upper())
     rows = simple_query('top_carriers_by_route', 'route', origin + '_' + dest)
     display_list(rows, 'carriers', 'Top Carriers for route %s -> %s' % (origin, dest))
 elif args.task == 'Task24':
-    print "Enter origin and destinations codes: "
-    (origin, dest) = re.split('\s+', raw_input().strip().upper())
+    print("Enter origin and destinations codes: ")
+    (origin, dest) = re.split('\s+', input().strip().upper())
     rows = simple_query('arrival_delay_by_route', 'route', origin + '_' + dest)
     display_val(rows, 'arrival_delay', '%0.2f', 'Mean Arrival Delay for route %s -> %s' % (origin, dest))
 elif args.task == 'Task32':
-    print "Enter X Y Z YYYY-MM-DD: "
-    (x, y, z, dep_date_raw) = re.split('\s+', raw_input().strip().upper())
+    print("Enter X Y Z YYYY-MM-DD: ")
+    (x, y, z, dep_date_raw) = re.split('\s+', input().strip().upper())
     (year, m, d) = dep_date_raw.split('-')
     dd1 = datetime.date(int(year), int(m), int(d));
     dd2 = datetime.date(int(year), int(m), int(d) + 2);
