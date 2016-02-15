@@ -292,6 +292,16 @@ It should display something like this and show prompt:
         popularity int
     )
 
+    CREATE TABLE ccc_1.carrier_performance (
+        carrier ascii PRIMARY KEY,
+        arrival_delay float
+    )
+
+    CREATE TABLE ccc_1.weekday_performance (
+        weekday int PRIMARY KEY,
+        arrival_delay float
+    )
+
     CREATE TABLE ccc_1.top_carriers_by_origin (
         origin ascii PRIMARY KEY,
         carriers text
