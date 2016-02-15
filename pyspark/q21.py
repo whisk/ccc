@@ -27,11 +27,11 @@ def get_cass():
   cluster = Cluster(args.cassandra_host)
   return cluster.connect(args.cassandra_keyspace)
 
-def extract_origin_carrier_delay(line):
+def extract_origin_carrier_dep_delay(line):
   cols = line.split(' ')
   try:
     # "origin-carrier" (delay 1)
-    return [(cols[5] + "|" + cols[4], (float(cols[9]), 1))]
+    return [(cols[5] + "-" + cols[4], (float(cols[8]), 1))]
   except:
     return []
 
@@ -50,8 +50,8 @@ def top_weekdays(rdd):
   total = 0
   for el in curr:
     total += 1
-    key    = el[0].split('|')[0]
-    subkey = el[0].split('|')[1]
+    key    = el[0].split('-')[0]
+    subkey = el[0].split('-')[1]
     if key in top_dict:
       if subkey in top_dict[key]:
         top_dict[key][subkey] = (top_dict[key][subkey][0] + el[1][0], top_dict[key][subkey][1] + el[1][1])
@@ -72,7 +72,7 @@ def top_weekdays(rdd):
   print('=' * 80)
   prepared_stmt = cass.prepare('insert into %s (origin, carriers) values (?, ?)' % cassandra_table_name)
   for origin in top:
-    carriers = ' '.join(["%s %0.2f" % (el[0], el[1][0] / el[1][1]) for el in sorted(top[origin].items(), key=lambda el: el[1][0] / el[1][1])])
+    carriers = ' '.join(["%s=%0.2f" % (el[0], el[1][0] / el[1][1]) for el in sorted(top[origin].items(), key=lambda el: el[1][0] / el[1][1])][:args.n])
     cass.execute(prepared_stmt, (origin, carriers))
 
 get_cass().execute('truncate %s' % cassandra_table_name)
@@ -82,7 +82,7 @@ ssc = StreamingContext(sc, args.batch_interval)
 ssc.checkpoint(args.hdfs_prefix + '/checkpoint/q21')
 
 dstream = ssc.textFileStream(args.hdfs_prefix + args.input_dir)
-dstream = dstream.flatMap(extract_origin_carrier_delay).reduceByKey(lambda a, b: (a[0] + b[0], a[1] + b[1])).foreachRDD(top_weekdays)
+dstream = dstream.flatMap(extract_origin_carrier_dep_delay).reduceByKey(lambda a, b: (a[0] + b[0], a[1] + b[1])).foreachRDD(top_weekdays)
 
 ssc.start()
 while True:
