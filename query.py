@@ -12,9 +12,9 @@ import re
 import datetime
 
 AVAIL_TASKS   = ['Task21', 'Task22', 'Task23', 'Task24', 'Task32']
-DEFAULT_HOSTS = ['10.0.223.125', '10.0.55.140']
+DEFAULT_HOSTS = ['cassandra-1', 'cassandra-2']
 
-parser = argparse.ArgumentParser(description='cmdline query tool for CCC Part 1')
+parser = argparse.ArgumentParser(description='cmdline query tool for CCC')
 parser.add_argument('task', nargs='?',  choices=AVAIL_TASKS, help='Task Name')
 parser.add_argument('-k', '--keyspace', default='ccc_1',     help='Cassandra DB Keyspace')
 parser.add_argument('--host',           action='append',     help='Cassandra DB Host')
