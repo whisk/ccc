@@ -44,7 +44,7 @@ def display_list(rows, val, label):
         print(label)
         for z in getattr(rows[0], val).split(' '):
             [c, r] = z.split('=')
-            print("%s %0.2f" % (c, float(r)))
+            print("%s %0.2f" % (re.sub(r'~.*', '', c), float(r)))
 
 def flight_query(x, y, d, time_min, time_max):
     flights = []

@@ -7,9 +7,13 @@ import sys
 
 hdfs_path = '/ccc/input/'
 hdfs_url  = 'http://hadoop-master:50070/'
+fname_patt = sys.argv[1] if len(sys.argv) > 1 else '.*'
 
 hdfs_client = hdfs.client.InsecureClient(hdfs_url)
 for fname in hdfs_client.list(hdfs_path):
+  if not(re.match(fname_patt, fname)):
+    continue
+
   fname_curr = hdfs_path + fname
   fname_new = fname_curr
   m = re.search(r'___(\d{5})$', fname_curr)
