@@ -80,14 +80,17 @@ def unzipper(zip_fnames, result, idx):
                 print "Skipping '%s'" % (line)
     result[idx] = (sum_raw_size, sum_extr_size, sum_lines)
 
-threads = [None] * threads_count
-res     = [None] * threads_count
-for t in range(threads_count):
-    threads[t] = threading.Thread(target=unzipper, args=(zip_fnames[t::threads_count], res, t))
-    threads[t].start()
-
-for thread in threads:
-    thread.join()
+try:
+    threads = [None] * threads_count
+    res     = [None] * threads_count
+    for t in range(threads_count):
+        threads[t] = threading.Thread(target=unzipper, args=(zip_fnames[t::threads_count], res, t))
+        threads[t].start()
+except KeyboardInterrupt:
+    print "Got CTRL-C. Exiting..."
+finally:
+    for thread in threads:
+        thread.join()
 
 print "Raw size: %0.2fG" % (sum(x[0] for x in res) / 1024 / 1024 / 1024)
 print "Extracted size: %0.2fG" % (sum(x[1] for x in res) / 1024 / 1024 / 1024)
