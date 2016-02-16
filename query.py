@@ -56,7 +56,10 @@ def flight_query(x, y, d, time_min, time_max):
     return flights[0] if len(flights) > 0 else None
 
 def display_flight(f):
-    print("%s->%s date %s time %04s, Delay %d" % (f.origin, f.destination, f.departure_date, f.departure_time, f.departure_delay))
+    if f is None:
+        print("Not found")
+    else:
+        print("%s->%s date %s time %04s, Delay %d" % (f.origin, f.destination, f.departure_date, f.departure_time, f.departure_delay))
 
 def display_val(rows, val, fmt, label):
     if len(rows) == 0:
