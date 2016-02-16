@@ -30,7 +30,7 @@ def get_cass():
 def extract_org_dest(line):
   cols = line.split(' ')
   if len(cols) > 6:
-    return [cols[5], cols[6]]
+    return [(cols[5] 1), (cols[6] 1)]
   else:
     return []
 
@@ -76,7 +76,7 @@ ssc = StreamingContext(sc, args.batch_interval)
 ssc.checkpoint(args.hdfs_prefix + '/checkpoint')
 
 dstream = ssc.textFileStream(args.hdfs_prefix + args.input_dir)
-dstream = dstream.flatMap(extract_org_dest).map(lambda airport: (airport, 1)).reduceByKey(lambda a, b: a + b).foreachRDD(top_airports)
+dstream = dstream.flatMap(extract_org_dest).reduceByKey(lambda a, b: a + b).foreachRDD(top_airports)
 
 ssc.start()
 while True:

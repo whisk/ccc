@@ -4,6 +4,7 @@ import subprocess
 from subprocess import Popen
 import re
 import os
+import os.path
 import sys
 import errno
 import time
@@ -12,7 +13,9 @@ import threading
 # data paths
 dataset_path = '/dataset/aviation/airline_ontime/'
 tmp_path = '/tmp/dataset-tmp'
+use_hdfs = False
 hdfs_path = '/ccc/input/'
+output_path = '~/'
 threads_count = 2
 
 # extracting from csv
@@ -57,16 +60,22 @@ def unzipper(zip_fnames, result, idx):
                 sum_extr_size += os.stat(extr_fname).st_size
                 sum_lines += int(Popen(['wc', '-l', extr_fname], stdout=subprocess.PIPE).stdout.readlines()[0].split(' ')[0])
 
-                print "Putting %s to HDFS://%s" % (extr_fname, hdfs_path)
-                code = Popen(['hdfs', 'dfs', '-put', '-f', extr_fname, hdfs_path]).wait()
-                if code != 0:
-                    print "Error putting to HDFS"
-                    continue
+                if use_hdfs:
+                    print "Putting %s to HDFS://%s" % (extr_fname, hdfs_path)
+                    code = Popen(['hdfs', 'dfs', '-put', '-f', extr_fname, hdfs_path]).wait()
+                    if code != 0:
+                        print "Error putting to HDFS"
+                        continue
 
-                print "OK"
+                    print "OK"
 
-                os.remove(csv_fname)
-                os.remove(extr_fname)
+                    os.remove(csv_fname)
+                    os.remove(extr_fname)
+                else:
+                    os.remove(csv_fname)
+                    dest = os.path.join(output_path, os.path.basename(extr_fname))
+                    print "Moving %s -> %s" % (extr_fname, dest)
+                    os.rename(extr_fname, dest)
             else:
                 print "Skipping '%s'" % (line)
     result[idx] = (sum_raw_size, sum_extr_size, sum_lines)
