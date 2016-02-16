@@ -36,37 +36,36 @@ def extract_trip_info(line):
       except:
         pass
       # origin destination date time dep_delay
-      return (cols[5], cols[6], date, int(cols[7]), dep_delay)
+      return [(cols[5], cols[6], date, int(cols[7]), dep_delay)]
     else:
-      return ()
+      return []
   except Exception as e:
     print(line, e)
-    return ()
+    return []
 
 def save_trip_partition(part):
-  cass = get_cass()
-  prepared_stmt = cass.prepare("insert into trips (origin, destination, departure_date, departure_time, departure_delay) values (?, ?, ?, ?, ?)")
-  for el in part:
-    if len(el) > 4:
-      cass.execute(prepared_stmt, (el[0], el[1], el[2], el[3], el[4]))
-  return True
-
-def save_trip(rdd):
-  global ts_has_data
-  global ts_no_data
-
-  #rdd.foreachPartition(save_trip_partition)
-  part = rdd.toLocalIterator()
   cass = get_cass()
   prepared_stmt = cass.prepare("insert into trips (origin, destination, departure_date, departure_time, departure_delay) values (?, ?, ?, ?, ?)")
   total = 0
   for el in part:
     total += 1
-    if len(el) > 4:
+    try:
       cass.execute(prepared_stmt, (el[0], el[1], el[2], el[3], el[4]))
-
+    except Exception as e:
+      print(el, e)
   print("=" * 80)
   print(total)
+  cass.shutdown()
+
+def save_trip(rdd):
+  global ts_has_data
+  global ts_no_data
+
+  if rdd.isEmpty():
+    total = 0
+  else:
+    total = 1
+    rdd.foreachPartition(save_trip_partition)
 
   if total == 0:
     ts_no_data = time.time()
@@ -80,7 +79,7 @@ ssc = StreamingContext(sc, args.batch_interval)
 ssc.checkpoint(args.hdfs_prefix + '/checkpoint/q32')
 
 dstream = ssc.textFileStream(args.hdfs_prefix + args.input_dir)
-dstream = dstream.map(extract_trip_info).foreachRDD(save_trip)
+dstream = dstream.flatMap(extract_trip_info).foreachRDD(save_trip)
 
 ssc.start()
 while True:
