@@ -15,7 +15,7 @@ dataset_path = '/dataset/aviation/airline_ontime/'
 tmp_path = '/tmp/dataset-tmp'
 use_hdfs = False
 hdfs_path = '/ccc/input/'
-output_path = '~/'
+output_path = './'
 threads_count = 2
 
 # extracting from csv
