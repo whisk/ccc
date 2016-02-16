@@ -4,6 +4,7 @@ from cassandra.cluster import Cluster
 import argparse
 import sys
 import time
+from pyspark.streaming.kafka import KafkaUtils, TopicAndPartition
 
 parser = argparse.ArgumentParser()
 parser.add_argument('input_dir',                         default='/ccc/input')
@@ -13,7 +14,7 @@ parser.add_argument('-b', '--batch-interval',            default=5)
 parser.add_argument('-k', '--cassandra-keyspace',        default='ccc_1')
 parser.add_argument('-t', '--cassandra-truncate',        default=True, action='store_true')
 parser.add_argument('--cassandra-host', action='append', default=['cassandra-1', 'cassandra-2'])
-parser.add_argument('--idle-time',                       default=30)
+parser.add_argument('--idle-time',                       default=60)
 parser.add_argument('--run-interval',                    default=5)
 args = parser.parse_args()
 
@@ -28,9 +29,9 @@ def get_cass():
   return cluster.connect(args.cassandra_keyspace)
 
 def extract_org_dest(line):
-  cols = line.split(' ')
+  cols = line[1].split(' ')
   if len(cols) > 6:
-    return [(cols[5] 1), (cols[6] 1)]
+    return [(cols[5], 1), (cols[6], 1)]
   else:
     return []
 
@@ -75,7 +76,8 @@ sc = SparkContext(appName='Airport Popularity')
 ssc = StreamingContext(sc, args.batch_interval)
 ssc.checkpoint(args.hdfs_prefix + '/checkpoint')
 
-dstream = ssc.textFileStream(args.hdfs_prefix + args.input_dir)
+#dstream = ssc.textFileStream(args.hdfs_prefix + args.input_dir)
+dstream = KafkaUtils.createStream(ssc, 'kafka-1:2181', 'q11-consumer', {'ccc_1' : 1}) 
 dstream = dstream.flatMap(extract_org_dest).reduceByKey(lambda a, b: a + b).foreachRDD(top_airports)
 
 ssc.start()
