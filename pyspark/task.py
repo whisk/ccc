@@ -1,3 +1,4 @@
+# @python 3
 from pyspark import SparkContext, SparkConf
 from pyspark.streaming import StreamingContext
 from cassandra.cluster import Cluster
@@ -12,6 +13,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('task', choices=AVAIL_TASKS)
 parser.add_argument('--hdfs-input-dir',                  default='/ccc/input')
 parser.add_argument('--kafka-topic',                     default='ccc_1')
+parser.add_argument('--kafka-brokers',                   default='kafka-1:9092')
 parser.add_argument('--zookeeper',                       default='kafka-1:2181')
 parser.add_argument('--kafka-partitions', type=int,      default=1)
 parser.add_argument('-n', type=int,                      default=10)
@@ -45,8 +47,9 @@ def get_cass():
 def dump(*params):
   print('=' * 20)
   print(time.strftime("%x %X"))
-  print('=' * 20)
+  print('-' * 20)
   print(params)
+  print('=' * 20)
 
 def extr_line(line):
   return line[1].split(' ')
@@ -262,7 +265,7 @@ def save_trip(rdd):
     rdd.foreachPartition(save_trip_partition)
 
 # truncation
-if args.t:
+if args.cassandra_truncate:
   get_cass().execute('truncate %s' % schema['table'])
 
 # main part
@@ -270,8 +273,11 @@ sc = SparkContext(appName='Task %s' % args.task)
 ssc = StreamingContext(sc, args.batch_interval)
 ssc.checkpoint(args.hdfs_prefix + '/checkpoint/' + args.task)
 
-dstream = KafkaUtils.createStream(ssc, \
-  args.zookeeper, 'task-%s-consumer' % args.task, {args.kafka_topic : args.kafka_partitions}) 
+#dstream = KafkaUtils.createStream(ssc, \
+#  args.zookeeper, 'task-%s-consumer' % args.task, {args.kafka_topic: args.kafka_partitions, 'auto.offset.reset': 0}) 
+
+dstream = KafkaUtils.createDirectStream(ssc, \
+  [args.kafka_topic], {'metadata.broker.list': args.kafka_brokers, 'auto.offset.reset': 'smallest'}) 
 
 # task specific
 if args.task == 'q11':
@@ -304,5 +310,5 @@ while True:
   else:
     # still running
     if time.time() - ts_last_data > args.idle_time:
-      print("No data received for %d seconds, stopping..." % args.idle_time)
-      ssc.stop(stopSparkContext=True, stopGraceFully=True)
+      dump("No data received for %d seconds, stopping..." % args.idle_time)
+      ssc.stop(stopSparkContext=True, stopGraceFully=False)

@@ -11,17 +11,14 @@ import sys
 import re
 import datetime
 
-AVAIL_TASKS   = ['Task21', 'Task22', 'Task23', 'Task24', 'Task32']
-DEFAULT_HOSTS = ['cassandra-1', 'cassandra-2']
+AVAIL_TASKS=['q11', 'q12', 'q13', 'q21', 'q22', 'q23', 'q24', 'q32']
 
 parser = argparse.ArgumentParser(description='cmdline query tool for CCC')
-parser.add_argument('task', nargs='?',  choices=AVAIL_TASKS, help='Task Name')
-parser.add_argument('-k', '--keyspace', default='ccc_1',     help='Cassandra DB Keyspace')
-parser.add_argument('--host',           action='append',     help='Cassandra DB Host')
+parser.add_argument('task', nargs='?',  choices=AVAIL_TASKS,                                         help='Task Name')
+parser.add_argument('-n',               type=int,            default=10)
+parser.add_argument('-k', '--keyspace',                      default='ccc_1',                        help='Cassandra DB Keyspace')
+parser.add_argument('--host',           action='append',     default=['cassandra-1', 'cassandra-2'], help='Cassandra DB Host')
 args = parser.parse_args()
-
-if args.host == None:
-    args.host = DEFAULT_HOSTS
 
 # connect to cassandra
 try:
@@ -68,27 +65,43 @@ def display_val(rows, val, fmt, label):
         print(label)
         print(fmt % getattr(rows[0], val))
 
-if args.task == 'Task21':
+def display_top(table_name, key_name, value_name, sort_func, fmt, key_type, value_type):
+    rows = []
+    for row in cass.execute('select * from %s' % (table_name)):
+        rows += [row]    
+    for el in sorted(rows, key=sort_func)[:args.n]:
+        print(fmt % (key_type(getattr(el, key_name)), value_type(getattr(el, value_name))))
+
+if args.task == 'q11':
+    print("Top airports")
+    display_top('airport_popularity', 'airport', 'popularity', lambda x: -x.popularity, "%4s: %12s", str, int)
+if args.task == 'q12':
+    print("Top carriers")
+    display_top('carrier_performance', 'carrier', 'arrival_delay', lambda x: x.arrival_delay, "%4s: %05.2f", str, float)
+if args.task == 'q13':
+    print("Weekday performance")
+    display_top('weekday_performance', 'weekday', 'arrival_delay', lambda x: x.weekday, "%4s: %05.2f", str, float)
+if args.task == 'q21':
     print("Enter origin code: ")
     origin = input().strip().upper()
     rows = simple_query('top_carriers_by_origin', 'origin', origin)
     display_list(rows, 'carriers', 'Top Carriers for %s' % origin)
-elif args.task == 'Task22':
+elif args.task == 'q22':
     print("Enter origin code: ")
     origin = input().strip().upper()
     rows = simple_query('top_destinations_by_origin', 'origin', origin)
     display_list(rows, 'destinations', 'Top Destinations for %s' % origin)
-elif args.task == 'Task23':
+elif args.task == 'q23':
     print("Enter origin and destinations codes: ")
     (origin, dest) = re.split('\s+', input().strip().upper())
     rows = simple_query('top_carriers_by_route', 'route', origin + '_' + dest)
     display_list(rows, 'carriers', 'Top Carriers for route %s -> %s' % (origin, dest))
-elif args.task == 'Task24':
+elif args.task == 'q24':
     print("Enter origin and destinations codes: ")
     (origin, dest) = re.split('\s+', input().strip().upper())
     rows = simple_query('arrival_delay_by_route', 'route', origin + '_' + dest)
     display_val(rows, 'arrival_delay', '%0.2f', 'Mean Arrival Delay for route %s -> %s' % (origin, dest))
-elif args.task == 'Task32':
+elif args.task == 'q32':
     print("Enter X Y Z YYYY-MM-DD: ")
     (x, y, z, dep_date_raw) = re.split('\s+', input().strip().upper())
     (year, m, d) = dep_date_raw.split('-')
