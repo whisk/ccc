@@ -36,6 +36,7 @@ _schema = {
   'q23': {'table': 'top_carriers_by_route',      'key': 'route',  'value': 'carriers'},
   'q24': {'table': 'arrival_delay_by_route',     'key': 'route',  'value': 'arrival_delay'},
   # q32 is uniq
+  'q32': {'table': 'trips'}
 }
 schema = _schema[args.task]
 
@@ -245,7 +246,7 @@ def top_complex_average(rdd):
 # partition saving to cassandra
 def save_trip_partition(part):
   cass = get_cass()
-  prepared_stmt = cass.prepare("insert into trips (origin, destination, departure_date, departure_time, departure_delay) values (?, ?, ?, ?, ?)")
+  prepared_stmt = cass.prepare("insert into %s (origin, destination, departure_date, departure_time, departure_delay) values (?, ?, ?, ?, ?)" % schema['table'])
   total = 0
   for el in part:
     total += 1
@@ -260,6 +261,8 @@ def save_trip_partition(part):
 def save_trip(rdd):
   global ts_last_data
 
+  # tmp
+  ts_last_data = time.time() 
   if not rdd.isEmpty():
     ts_last_data = time.time() 
     rdd.foreachPartition(save_trip_partition)
@@ -295,6 +298,7 @@ elif args.task == 'q23':
 elif args.task == 'q24':
   dstream = dstream.flatMap(extract_route_arr_delay).reduceByKey(lambda a, b: (a[0] + b[0], a[1] + b[1])).foreachRDD(top_average)
 elif args.task == 'q32':
+  get_cass().execute('truncate %s' % schema['table'])
   dstream = dstream.flatMap(extract_trip_info).foreachRDD(save_trip)
 else:
   print("Unknown task")

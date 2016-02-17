@@ -74,10 +74,10 @@ def display_top(table_name, key_name, value_name, sort_func, fmt, key_type, valu
 
 if args.task == 'q11':
     print("Top airports")
-    display_top('airport_popularity', 'airport', 'popularity', lambda x: -x.popularity, "%4s: %12s", str, int)
+    display_top('airport_popularity', 'airport', 'popularity', lambda x: -x.popularity, "%4s: %8s", str, int)
 if args.task == 'q12':
     print("Top carriers")
-    display_top('carrier_performance', 'carrier', 'arrival_delay', lambda x: x.arrival_delay, "%4s: %05.2f", str, float)
+    display_top('carrier_performance', 'carrier', 'arrival_delay', lambda x: x.arrival_delay, "%8s: %05.2f", str, float)
 if args.task == 'q13':
     print("Weekday performance")
     display_top('weekday_performance', 'weekday', 'arrival_delay', lambda x: x.weekday, "%4s: %05.2f", str, float)
