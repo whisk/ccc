@@ -86,6 +86,7 @@ try:
     for t in range(threads_count):
         threads[t] = threading.Thread(target=unzipper, args=(zip_fnames[t::threads_count], res, t))
         threads[t].start()
+# FIXME: not really interrupts...
 except KeyboardInterrupt:
     print "Got CTRL-C. Exiting..."
 finally:

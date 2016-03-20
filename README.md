@@ -330,3 +330,50 @@ It should display something like this and show prompt:
         departure_delay int,
         PRIMARY KEY (origin, destination, departure_date, departure_time)
     );
+
+## Sample queries
+
+### Part 1
+
+Missing.
+
+### Part 2
+
+    spark-submit --jars ~/spark-streaming-kafka-assembly_2.10.jar --master yarn-cluster --num-executors 6 --executor-cores 1 task.py q11
+
+q21:
+
+    echo 'SRQ' | ../query.py q21
+    echo 'CMH' | ../query.py q21
+    echo 'JFK' | ../query.py q21
+    echo 'SEA' | ../query.py q21
+    echo 'BOS' | ../query.py q21
+
+q22:
+
+    echo 'SRQ' | ../query.py q22
+    echo 'CMH' | ../query.py q22
+    echo 'JFK' | ../query.py q22
+    echo 'SEA' | ../query.py q22
+    echo 'BOS' | ../query.py q22
+
+q23:
+
+    echo 'LGA BOS' | ../query.py q23
+    echo 'BOS LGA' | ../query.py q23
+    echo 'OKC DFW' | ../query.py q23
+    echo 'MSP ATL' | ../query.py q23
+
+q24:
+
+    echo 'LGA BOS' | ../query.py q24
+    echo 'BOS LGA' | ../query.py q24
+    echo 'OKC DFW' | ../query.py q24
+    echo 'MSP ATL' | ../query.py q24
+
+q32: 
+
+    echo 'BOS ATL LAX 2008-04-03' | ../query.py q32
+    echo 'PHX JFK MSP 2008-09-07' | ../query.py q32
+    echo 'DFW STL ORD 2008-01-24' | ../query.py q32
+    echo 'LAX MIA LAX 2008-05-16' | ../query.py q32
